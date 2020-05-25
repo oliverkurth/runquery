@@ -12,12 +12,20 @@ CLIENT_SECRET='STRAVA_CLIENT_SECRET'
 
 bp = Blueprint('locs', __name__)
 
+main_menu = [
+        {"name" : "main", "link" : "/", "label" : "Main"},
+        {"name" : "athlete", "link" : "/athlete", "label" : "Athlete"},
+]
+
 @bp.route('/athlete')
 def show_athlete():
     token_struct = session['token_struct']
     client = Client(access_token=token_struct['access_token'])
     athlete = client.get_athlete()
-    return json.dumps(athlete.to_dict())
+    return render_template(
+                           'locs/athlete.html',
+                           menu=main_menu, active_name='athlete')
+#    return json.dumps(athlete.to_dict())
 #    return "Name: {}, email: {}".format(athlete.firstname, athlete.email)
 
 @bp.route('/activity')
