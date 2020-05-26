@@ -15,6 +15,7 @@ bp = Blueprint('locs', __name__)
 main_menu = [
         {"name" : "main", "link" : "/", "label" : "Main"},
         {"name" : "athlete", "link" : "/athlete", "label" : "Athlete"},
+        {"name" : "map", "link" : "/map", "label" : "Map"},
 ]
 
 @bp.route('/athlete')
@@ -27,6 +28,15 @@ def show_athlete():
                            menu=main_menu, active_name='athlete')
 #    return json.dumps(athlete.to_dict())
 #    return "Name: {}, email: {}".format(athlete.firstname, athlete.email)
+
+@bp.route('/map')
+def show_map():
+#    token_struct = session['token_struct']
+#    client = Client(access_token=token_struct['access_token'])
+#    athlete = client.get_athlete()
+    return render_template(
+                           'locs/map.html',
+                           menu=main_menu, active_name='map')
 
 @bp.route('/activity')
 def show_activity():
