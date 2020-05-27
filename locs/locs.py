@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from stravalib.client import Client
+from stravalib.exc import AccessUnauthorized
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -18,14 +19,24 @@ main_menu = [
         {"name" : "map", "link" : "/map", "label" : "Map"},
 ]
 
+def strava_login(client):
+    authorize_url = client.authorization_url(
+        client_id=CLIENT_ID,
+        redirect_uri='http://192.168.173.131:8282/authorized')
+    return redirect(authorize_url, code=302)
+
 @bp.route('/athlete')
 def show_athlete():
     token_struct = session['token_struct']
     client = Client(access_token=token_struct['access_token'])
-    athlete = client.get_athlete()
-    return render_template(
-                           'locs/athlete.html',
-                           menu=main_menu, active_name='athlete')
+    try:
+        athlete = client.get_athlete()
+        return render_template(
+                               'locs/athlete.html',
+                               menu=main_menu, active_name='athlete')
+    except AccessUnauthorized:
+        return strava_login(client)
+
 #    return json.dumps(athlete.to_dict())
 #    return "Name: {}, email: {}".format(athlete.firstname, athlete.email)
 
