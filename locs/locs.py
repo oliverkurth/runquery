@@ -19,7 +19,20 @@ main_menu = [
         {"name" : "map", "link" : "/map", "label" : "Map"},
 ]
 
-def strava_login(client):
+@bp.route('/authorized')
+def authorized():
+    code = request.args.get('code')
+    client = Client()
+    token_struct = client.exchange_code_for_token(
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        code=code
+    )
+    session['token_struct'] = token_struct
+    return ("I now have an access token {token}".format(token=token_struct))
+
+def strava_login():
+    client = Client()
     authorize_url = client.authorization_url(
         client_id=CLIENT_ID,
         redirect_uri='http://192.168.173.131:8282/authorized')
@@ -27,7 +40,9 @@ def strava_login(client):
 
 @bp.route('/athlete')
 def show_athlete():
-    token_struct = session['token_struct']
+    token_struct = session.get('token_struct')
+    if token_struct == None:
+        return strava_login()
     client = Client(access_token=token_struct['access_token'])
     try:
         athlete = client.get_athlete()
@@ -35,7 +50,7 @@ def show_athlete():
                                'locs/athlete.html',
                                menu=main_menu, active_name='athlete')
     except AccessUnauthorized:
-        return strava_login(client)
+        return strava_login()
 
 #    return json.dumps(athlete.to_dict())
 #    return "Name: {}, email: {}".format(athlete.firstname, athlete.email)
@@ -57,20 +72,6 @@ def show_activity():
     activity = client.get_activity(id)
     return "start: {}, end: {}".format(activity.start_latlng, activity.end_latlng)
     #return json.dumps(activity.to_dict())
-
-@bp.route('/authorized')
-def authorized():
-    code = request.args.get('code')
-    client = Client()
-    token_struct = client.exchange_code_for_token(
-        client_id=CLIENT_ID,
-        client_secret=CLIENT_SECRET,
-        code=code
-    )
-    athlete = client.get_athlete()
-    session['token_struct'] = token_struct
-    return ("For {id}, I now have an access token {token}".format(
-        id=athlete.id, token=token_struct))
 
 @bp.route('/')
 def index():
