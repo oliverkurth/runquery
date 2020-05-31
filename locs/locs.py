@@ -19,6 +19,9 @@ main_menu = [
         {"name" : "map", "link" : "/map", "label" : "Map"},
 ]
 
+class NoToken(Exception):
+    pass
+
 @bp.route('/authorized')
 def authorized():
     code = request.args.get('code')
@@ -33,23 +36,36 @@ def authorized():
 
 def strava_login():
     client = Client()
+
     authorize_url = client.authorization_url(
         client_id=CLIENT_ID,
         redirect_uri='http://192.168.173.131:8282/authorized')
+
     return redirect(authorize_url, code=302)
+
+def create_context():
+    token_struct = session.get('token_struct')
+    if token_struct == None:
+        raise NoToken
+
+    client = Client(access_token=token_struct['access_token'])
+
+    try:
+        athlete = client.get_athlete()
+
+    except AccessUnauthorized:
+        raise
+
+    return client, athlete
 
 @bp.route('/athlete')
 def show_athlete():
-    token_struct = session.get('token_struct')
-    if token_struct == None:
-        return strava_login()
-    client = Client(access_token=token_struct['access_token'])
     try:
-        athlete = client.get_athlete()
+        client, athlete = create_context()
         return render_template(
                                'locs/athlete.html',
                                menu=main_menu, active_name='athlete')
-    except AccessUnauthorized:
+    except AccessUnauthorized, NoToken:
         return strava_login()
 
 #    return json.dumps(athlete.to_dict())
