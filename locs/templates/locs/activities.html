@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block header %}
+{% endblock %}
+
+{% block content %}
+<table class="main">
+{% for a in activities %}
+<tr>
+<td>{{a.name}}</td><td>{{a.type}}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
+
