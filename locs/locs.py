@@ -2,7 +2,7 @@
 
 import stravalib
 from stravalib.client import Client
-from stravalib.exc import AccessUnauthorized
+from stravalib.exc import AccessUnauthorized, ObjectNotFound
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app
 )
@@ -155,7 +155,27 @@ def show_activities():
     except AccessUnauthorized:
         return strava_login()
 
+@bp.route('/activity')
+def show_activity():
+    id = request.args.get('id')
+    try:
+        client, athlete = create_context()
 
+        refresh_activities(client, athlete)
+
+        activity = client.get_activity(id)
+        print(activity.name)
+        return render_template(
+                               'locs/activity.html', a=activity,
+                               menu=main_menu, active_name='activities')
+
+    except NoToken:
+        return strava_login()
+    except AccessUnauthorized:
+        return strava_login()
+    except ObjectNotFound:
+        return render_template('404.html', object="activity",
+                               menu=main_menu, active_name='activities'), 404
 
 @bp.route('/map')
 def show_map():
@@ -165,15 +185,6 @@ def show_map():
     return render_template(
                            'locs/map.html',
                            menu=main_menu, active_name='map')
-
-@bp.route('/activity')
-def show_activity():
-    id = request.args.get('id')
-    token_struct = session['token_struct']
-    client = Client(access_token=token_struct['access_token'])
-    activity = client.get_activity(id)
-    return "start: {}, end: {}".format(activity.start_latlng, activity.end_latlng)
-    #return json.dumps(activity.to_dict())
 
 @bp.route('/')
 def index():
