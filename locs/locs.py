@@ -130,7 +130,9 @@ def show_athlete():
         return render_template(
                                'locs/athlete.html', a=athlete,
                                menu=main_menu, active_name='athlete')
-    except AccessUnauthorized, NoToken:
+    except NoToken:
+        return strava_login()
+    except AccessUnauthorized:
         return strava_login()
 
 #    return json.dumps(athlete.to_dict())
@@ -147,7 +149,10 @@ def show_activities():
         return render_template(
                                'locs/activities.html', activities=activities,
                                menu=main_menu, active_name='activities')
-    except AccessUnauthorized, NoToken:
+
+    except NoToken:
+        return strava_login()
+    except AccessUnauthorized:
         return strava_login()
 
 
@@ -176,6 +181,7 @@ def index():
     if not 'token_struct' in session:
         authorize_url = client.authorization_url(
             client_id=CLIENT_ID,
+            scope='scope=read_all,activity:read_all',
             redirect_uri='http://192.168.173.131:8282/authorized')
         return redirect(authorize_url, code=302)
     return('you are authorized')
