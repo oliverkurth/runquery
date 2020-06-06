@@ -7,7 +7,10 @@
 <table class="main">
 {% for a in activities %}
 <tr>
-<td>{{a.name}}</td><td>{{a.type}}</td>
+<td>{{a.name}}</td>
+<td>{{a.distance * 0.000621371}}</td>
+<td>{{a.elapsed_time}}</td>
+<td>{{a.type}}</td>
 </tr>
 {% endfor %}
 </table>
