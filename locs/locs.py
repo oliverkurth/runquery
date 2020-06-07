@@ -3,6 +3,7 @@
 import stravalib
 from stravalib.client import Client
 from stravalib.exc import AccessUnauthorized, ObjectNotFound
+import polyline
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app
 )
@@ -119,6 +120,7 @@ def load_activities(client, athlete, num=25, start=0):
 #        fix_activity(d)
         activity = stravalib.model.Activity()
         activity.from_dict(d)
+        activity.id = id
         activities.append(activity)
 
     return activities
@@ -164,7 +166,6 @@ def show_activity():
         refresh_activities(client, athlete)
 
         activity = client.get_activity(id)
-        print(activity.name)
         return render_template(
                                'locs/activity.html', a=activity,
                                menu=main_menu, active_name='activities')
@@ -177,14 +178,43 @@ def show_activity():
         return render_template('404.html', object="activity",
                                menu=main_menu, active_name='activities'), 404
 
-@bp.route('/map')
-def show_map():
+#@bp.route('/map')
+#def show_map():
 #    token_struct = session['token_struct']
 #    client = Client(access_token=token_struct['access_token'])
 #    athlete = client.get_athlete()
-    return render_template(
-                           'locs/map.html',
-                           menu=main_menu, active_name='map')
+#    return render_template(
+#                           'locs/map.html',
+#                           menu=main_menu, active_name='map')
+
+@bp.route('/map')
+def show_map():
+    try:
+        client, athlete = create_context()
+
+        refresh_activities(client, athlete)
+
+        activities = load_activities(client, athlete, num=200)
+
+        start_points = []
+        for a in activities:
+            line = polyline.decode(a.map.summary_polyline)
+            start_points.append(line[0])
+
+        return render_template(
+                               'locs/map.html',
+                               activities=activities,
+                               ids=[a.id for a in activities],
+                               dates = [a.start_date_local.strftime("%a, %d %b %Y") for a in activities],
+                               names=[a.name for a in activities],
+                               start_points=start_points,
+                               menu=main_menu, active_name='map')
+
+    except NoToken:
+        return strava_login()
+    except AccessUnauthorized:
+        return strava_login()
+
 
 @bp.route('/')
 def index():

@@ -18,6 +18,17 @@
         attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
       }).addTo(map);
     L.control.scale().addTo(map);
+
+    var start_points = {{start_points|tojson}};
+    var ids = {{ids|tojson}};
+    var dates = {{dates|tojson}};
+    var names = {{names|tojson}};
+    for (i = 0; i < start_points.length; i++) {
+        p = start_points[i];
+        var marker = L.marker(p).addTo(map);
+        marker.bindPopup(dates[i] + "<br/><a href='https://strava.com/activities/" + ids[i] + "'>" + names[i] + "</a>");
+    }
+
 </script>
 {% endblock %}
 
