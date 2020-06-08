@@ -11,6 +11,7 @@ import functools
 import os
 import glob
 import json
+from datetime import datetime
 
 CLIENT_ID='3724'
 CLIENT_SECRET='STRAVA_CLIENT_SECRET'
@@ -21,6 +22,7 @@ main_menu = [
         {"name" : "main", "link" : "/", "label" : "Main"},
         {"name" : "athlete", "link" : "/athlete", "label" : "Athlete"},
         {"name" : "activities", "link" : "/activities", "label" : "Activities"},
+        {"name" : "search", "link" : "/search", "label" : "Search"},
         {"name" : "map", "link" : "/map", "label" : "Map"},
 ]
 
@@ -178,6 +180,103 @@ def show_activity():
         return render_template('404.html', object="activity",
                                menu=main_menu, active_name='activities'), 404
 
+@bp.route('/api/set_search', methods=['POST'])
+def api_set_search():
+
+    filter = request.get_json(force=True)
+    print(filter)
+    try:
+        client, athlete = create_context()
+        refresh_activities(client, athlete)
+        activities = load_activities(client, athlete, num=200)
+
+        title_words = filter.get('title_words').strip()
+
+        have_type = False
+        for type in ['run', 'ride', 'hike', 'walk']:
+            flag = filter.get('type_' + type)
+            if flag:
+                have_type = True
+                break
+
+        date_before = None
+        if filter.get('date_before'):
+            date_before = datetime.strptime(filter.get('date_before'), '%Y-%m-%d')
+
+        date_after = None
+        if filter.get('date_after'):
+            date_after = datetime.strptime(filter.get('date_after'), '%Y-%m-%d')
+
+        min_dist = int(filter.get('min_dist') or 0)
+        max_dist = int(filter.get('max_dist') or 0)
+        min_gain = int(filter.get('min_gain') or 0)
+        max_gain = int(filter.get('max_gain') or 0)
+
+        #matched = activities
+        matched = []
+        for a in activities:
+            # XXX not quite right yet
+            if title_words not in (None, ''):
+                if not title_words in a.name:
+                    continue
+
+            if have_type:
+                is_type = False
+                for t in ['run', 'ride', 'hike', 'walk']:
+                    if str(a.type).lower() == t and filter.get('type_' + t):
+                        is_type = True
+                        break
+                if not is_type:
+                    continue
+
+            if date_before:
+                if a.start_date_local > date_before:
+                    continue
+
+            if date_after:
+                if a.start_date_local < date_after:
+                    continue
+
+            if min_dist > 0:
+                if int(a.distance) < min_dist:
+                    continue
+
+            if max_dist > 0:
+                if int(a.distance) > min_dist:
+                    continue
+
+            if min_gain > 0:
+                if int(a.total_elevation_gain) < min_gain:
+                    continue
+
+            if max_gain > 0:
+                if int(a.total_elevation_gain) > max_gain:
+                    continue
+
+            matched.append(a)
+
+        results = []
+        for m in matched:
+            results.append({
+                'title' : m.name,
+                'type' : m.type,
+                'date' : str(m.start_date_local),
+                'distance' : int(m.distance),
+                'gain' : int(m.total_elevation_gain)
+            })
+ 
+        return(json.dumps(results))
+    except NoToken:
+        return strava_login()
+    except AccessUnauthorized:
+        return strava_login()
+
+@bp.route('/search')
+def show_search():
+
+    return render_template('locs/search.html',
+                           menu=main_menu, active_name='search')
+
 #@bp.route('/map')
 #def show_map():
 #    token_struct = session['token_struct']
@@ -191,9 +290,7 @@ def show_activity():
 def show_map():
     try:
         client, athlete = create_context()
-
         refresh_activities(client, athlete)
-
         activities = load_activities(client, athlete, num=200)
 
         start_points = []
