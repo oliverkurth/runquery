@@ -53,6 +53,7 @@ def strava_login():
     client = Client()
 
     authorize_url = client.authorization_url(
+        scope='activity:read_all',
         client_id=CLIENT_ID,
         redirect_uri='http://192.168.173.131:8282/authorized')
 
@@ -190,7 +191,8 @@ def api_set_search():
         refresh_activities(client, athlete)
         activities = load_activities(client, athlete, num=200)
 
-        title_words = filter.get('title_words').strip()
+        title_words = (filter.get('title_words') or '').strip().split()
+        title_words = [w.lower() for w in title_words] 
 
         have_type = False
         for type in ['run', 'ride', 'hike', 'walk']:
@@ -215,9 +217,13 @@ def api_set_search():
         #matched = activities
         matched = []
         for a in activities:
-            # XXX not quite right yet
-            if title_words not in (None, ''):
-                if not title_words in a.name:
+            if len(title_words) > 0:
+                all_found = True
+                for w in title_words:
+                    if not w in a.name.lower():
+                        all_found = False
+                        break
+                if not all_found:
                     continue
 
             if have_type:
@@ -319,7 +325,8 @@ def index():
     if not 'token_struct' in session:
         authorize_url = client.authorization_url(
             client_id=CLIENT_ID,
-            scope='scope=read_all,activity:read_all',
+            approval_prompt='force',
+            scope='activity:read_all',
             redirect_uri='http://192.168.173.131:8282/authorized')
         return redirect(authorize_url, code=302)
     return('you are authorized')
