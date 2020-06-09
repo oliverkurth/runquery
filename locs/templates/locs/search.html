@@ -8,6 +8,21 @@
 <script src="static/functions.js" type="text/javascript"></script>
 <script>
 
+function display_tab(evt, tabid) {
+  var i, tabcontent, tablinks;
+
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tab button");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(tabid).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+
 function generate_table(table, data) {
   table.innerHTML = '';
   for (let element of data) {
@@ -40,7 +55,11 @@ function set_search() {
     }
     async_post_json('/api/set_search', filter, set_search_cb, null);
     document.getElementById('status').innerHTML = 'searching...';
+
+    document.getElementById("btn default tab").click();
 }
+
+
 </script>
 
 <table class="main">
@@ -65,8 +84,19 @@ function set_search() {
 </tr>
 </table>
 
+<div class="tab">
+  <button class="tab button" onclick='display_tab(event, "tab list")' id='btn default tab'>List</button>
+  <button class="tab button" onclick='display_tab(event, "tab map")'>Map</button>
+</div>
+
+<div id="tab list" class="tabcontent">
 <table class="main" id="activities">
 </table>
+</div>
+
+<div id="tab map" class="tabcontent">
+Map goes here.
+</div>
 
 {% endblock %}
 
