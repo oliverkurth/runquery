@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 
 {% block header %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+   integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+   crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+   integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+   crossorigin=""></script>
 {% endblock %}
 
 {% block content %}
@@ -21,6 +27,8 @@ function display_tab(evt, tabid) {
   }
   document.getElementById(tabid).style.display = "block";
   evt.currentTarget.className += " active";
+
+  map.invalidateSize();
 }
 
 function generate_table(table, data) {
@@ -35,10 +43,24 @@ function generate_table(table, data) {
   }
 }
 
+var markers = [];
+function display_markers(data) {
+    for (let marker of markers) {
+        map.removeLayer(marker);
+    }
+    for (let a of data) {
+        p = a.start_latlng;
+        var marker = L.marker(p).addTo(map);
+        markers.push(marker);
+//        marker.bindPopup(dates[i] + "<br/><a href='https://strava.com/activities/" + ids[i] + "'>" + names[i] + "</a>");
+    }
+}
+
 function set_search_cb(result, data) {
     document.getElementById('status').innerHTML = 'found ' + result.length + ' results';
     table = document.getElementById('activities');
     generate_table(table, result);
+    display_markers(result);
 }
 
 function set_search() {
@@ -53,6 +75,7 @@ function set_search() {
             filter[id] = input.value;
         }
     }
+    filter['mapbounds'] = map.getBounds();
     async_post_json('/api/set_search', filter, set_search_cb, null);
     document.getElementById('status').innerHTML = 'searching...';
 
@@ -85,8 +108,8 @@ function set_search() {
 </table>
 
 <div class="tab">
-  <button class="tab button" onclick='display_tab(event, "tab list")' id='btn default tab'>List</button>
-  <button class="tab button" onclick='display_tab(event, "tab map")'>Map</button>
+  <button class="tab button" onclick='display_tab(event, "tab list")' id='btn list tab'>List</button>
+  <button class="tab button" onclick='display_tab(event, "tab map")' id='btn default tab'>Map</button>
 </div>
 
 <div id="tab list" class="tabcontent">
@@ -95,8 +118,15 @@ function set_search() {
 </div>
 
 <div id="tab map" class="tabcontent">
-Map goes here.
 </div>
+<script>
+var map = L.map('tab map').setView([37.65, -121.9], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+  }).addTo(map);
+L.control.scale().addTo(map);
+</script>
 
 {% endblock %}
 
