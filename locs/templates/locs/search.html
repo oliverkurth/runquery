@@ -35,10 +35,9 @@ function generate_table(table, data) {
   table.innerHTML = '';
   for (let element of data) {
     let row = table.insertRow();
-    for (key of ['title', 'type', 'date', 'distance', 'gain']) {
+    for (key of ['anchor', 'type', 'date', 'distance', 'gain']) {
       let cell = row.insertCell();
-      let text = document.createTextNode(element[key]);
-      cell.appendChild(text);
+      cell.innerHTML = element[key];
     }
   }
 }
@@ -52,13 +51,16 @@ function display_markers(data) {
         p = a.start_latlng;
         var marker = L.marker(p).addTo(map);
         markers.push(marker);
-//        marker.bindPopup(dates[i] + "<br/><a href='https://strava.com/activities/" + ids[i] + "'>" + names[i] + "</a>");
+        marker.bindPopup(a.date + "<br/>" + a.anchor);
     }
 }
 
 function set_search_cb(result, data) {
     document.getElementById('status').innerHTML = 'found ' + result.length + ' results';
     table = document.getElementById('activities');
+    for (let a of result) {
+        a['anchor'] = "<a href='" + a.link + "' target='_blank'>" + a.name + "</a>";
+    }
     generate_table(table, result);
     display_markers(result);
 }

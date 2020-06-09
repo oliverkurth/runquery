@@ -264,9 +264,10 @@ def api_set_search():
         results = []
         for m in matched:
             results.append({
-                'title' : m.name,
+                'link' : 'https://www.strava.com/activities/{}'.format(m.id),
+                'name' : m.name,
                 'type' : m.type,
-                'date' : str(m.start_date_local),
+                'date' : m.start_date_local.strftime("%a, %d %b %Y"),
                 'distance' : int(m.distance),
                 'gain' : int(m.total_elevation_gain),
                 'start_latlng' : [m.start_latitude, m.start_longitude]
