@@ -117,6 +117,10 @@ def load_activities(client, athlete, num=25, start=0):
 
     return activities
 
+@bp.route('/login')
+def show_login():
+    return strava_login()
+
 @bp.route('/athlete')
 def show_athlete():
     try:
@@ -260,10 +264,8 @@ def api_set_search():
             })
  
         return(json.dumps(results))
-    except NoToken:
-        return strava_login()
-    except AccessUnauthorized:
-        return strava_login()
+    except (NoToken, AccessUnauthorized):
+        return json.dumps({'error' : 'unauthorized'}), 401
 
 @bp.route('/search')
 def show_search():
@@ -297,15 +299,3 @@ def show_map():
     except AccessUnauthorized:
         return strava_login()
 
-
-@bp.route('/')
-def index():
-    client = Client()
-    if not 'token_struct' in session:
-        authorize_url = client.authorization_url(
-            client_id=CLIENT_ID,
-            approval_prompt='force',
-            scope='activity:read_all',
-            redirect_uri='http://192.168.173.131:8282/authorized')
-        return redirect(authorize_url, code=302)
-    return('you are authorized')
