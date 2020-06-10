@@ -96,16 +96,6 @@ def refresh_activities(client, athlete):
     # touch file
     open(completed_file, 'a').close()
 
-# crude hack, see https://github.com/hozn/stravalib/issues/194
-def fix_activity(activity):
-    if not ' ' in activity['timezone']:
-        activity['timezone'] = "(GMT-08:00) " + activity['timezone']
-
-    for delta in ["elapsed_time", "moving_time"]:
-        if type(activity[delta]) in [str, unicode]:
-            h,m,s = activity[delta].split(':')
-            activity[delta] = int(h)*3600 + int(m)*60 + int(s)
-
 def load_activities(client, athlete, num=25, start=0):
     athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
     activities_dir = os.path.join(athlete_dir, 'activities')
@@ -120,7 +110,6 @@ def load_activities(client, athlete, num=25, start=0):
     for id in ids:
         with open(os.path.join(activities_dir, '{}.json'.format(id)), 'r') as f:
             d = json.load(f)
-#        fix_activity(d)
         activity = stravalib.model.Activity()
         activity.from_dict(d)
         activity.id = id
