@@ -55,14 +55,18 @@ function display_markers(data) {
     }
 }
 
-function set_search_cb(result, data) {
-    document.getElementById('status').innerHTML = 'found ' + result.length + ' results';
-    table = document.getElementById('activities');
-    for (let a of result) {
-        a['anchor'] = "<a href='" + a.link + "' target='_blank'>" + a.name + "</a>";
+function set_search_cb(status, result, data) {
+    if (status == 200) {
+        document.getElementById('status').innerHTML = 'found ' + result.length + ' results';
+        table = document.getElementById('activities');
+        for (let a of result) {
+            a['anchor'] = "<a href='" + a.link + "' target='_blank'>" + a.name + "</a>";
+        }
+        generate_table(table, result);
+        display_markers(result);
+    } else if (status == 401) {
+        window.location.href = '/login?page=/search';
     }
-    generate_table(table, result);
-    display_markers(result);
 }
 
 function set_search() {

@@ -50,7 +50,7 @@ def authorized():
     session['token_struct'] = token_struct
     return redirect(page, code=302)
 
-def strava_login(page = None):
+def strava_login(page=None):
     client = Client()
     url = url_for('locs.authorized', _external=True, page=page)
     authorize_url = client.authorization_url(
@@ -120,7 +120,8 @@ def load_activities(client, athlete, num=25, start=0):
 
 @bp.route('/login')
 def show_login():
-    return strava_login()
+    page = request.args.get('page')
+    return strava_login(page=page)
 
 @bp.route('/athlete')
 def show_athlete():

@@ -15,9 +15,9 @@ function async_post_json(url, jsondata, callback, cbdata) {
     var xmlhttp = new XMLHttpRequest();
 
     xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+        if (xmlhttp.readyState == 4) {
             var result = JSON.parse(xmlhttp.responseText);
-            callback(result, cbdata);
+            callback(xmlhttp.status, result, cbdata);
         }
     };
     xmlhttp.open("POST", url, true);
