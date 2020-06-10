@@ -40,6 +40,7 @@ class NoToken(Exception):
 @bp.route('/authorized')
 def authorized():
     code = request.args.get('code')
+    page = request.args.get('page')
     client = Client()
     token_struct = client.exchange_code_for_token(
         client_id=CLIENT_ID,
@@ -47,15 +48,15 @@ def authorized():
         code=code
     )
     session['token_struct'] = token_struct
-    return ("I now have an access token {token}".format(token=token_struct))
+    return redirect(page, code=302)
 
-def strava_login():
+def strava_login(page = None):
     client = Client()
-
+    url = url_for('locs.authorized', _external=True, page=page)
     authorize_url = client.authorization_url(
         scope='activity:read_all',
         client_id=CLIENT_ID,
-        redirect_uri='http://192.168.173.131:8282/authorized')
+        redirect_uri=url)
 
     return redirect(authorize_url, code=302)
 
@@ -128,10 +129,8 @@ def show_athlete():
         return render_template(
                                'locs/athlete.html', a=athlete,
                                menu=main_menu, active_name='athlete')
-    except NoToken:
-        return strava_login()
-    except AccessUnauthorized:
-        return strava_login()
+    except (NoToken, AccessUnauthorized):
+        return strava_login('/athlete')
 
 @bp.route('/activities')
 def show_activities():
