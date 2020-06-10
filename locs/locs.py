@@ -129,9 +129,6 @@ def show_athlete():
     except AccessUnauthorized:
         return strava_login()
 
-#    return json.dumps(athlete.to_dict())
-#    return "Name: {}, email: {}".format(athlete.firstname, athlete.email)
-
 @bp.route('/activities')
 def show_activities():
     try:
@@ -273,15 +270,6 @@ def show_search():
 
     return render_template('locs/search.html',
                            menu=main_menu, active_name='search')
-
-#@bp.route('/map')
-#def show_map():
-#    token_struct = session['token_struct']
-#    client = Client(access_token=token_struct['access_token'])
-#    athlete = client.get_athlete()
-#    return render_template(
-#                           'locs/map.html',
-#                           menu=main_menu, active_name='map')
 
 @bp.route('/map')
 def show_map():
