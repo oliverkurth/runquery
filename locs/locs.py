@@ -12,6 +12,7 @@ import os
 import glob
 import json
 from datetime import datetime
+import time
 
 CLIENT_ID='3724'
 CLIENT_SECRET='STRAVA_CLIENT_SECRET'
@@ -19,7 +20,7 @@ CLIENT_SECRET='STRAVA_CLIENT_SECRET'
 bp = Blueprint('locs', __name__)
 
 main_menu = [
-        {"name" : "main", "link" : "/", "label" : "Main"},
+        {"name" : "settings", "link" : "/settings", "label" : "Settings"},
         {"name" : "athlete", "link" : "/athlete", "label" : "Athlete"},
         {"name" : "activities", "link" : "/activities", "label" : "Activities"},
         {"name" : "search", "link" : "/search", "label" : "Search"},
@@ -65,11 +66,15 @@ def create_context():
     if token_struct == None:
         raise NoToken
 
-    client = Client(access_token=token_struct['access_token'])
+    try:
+        access_token=token_struct['access_token']
+    except KeyError:
+        raise NoToken
+
+    client = Client(access_token=access_token)
 
     try:
         athlete = client.get_athlete()
-
     except AccessUnauthorized:
         raise
 
@@ -79,33 +84,61 @@ def create_context():
 
     return client, athlete
 
-def refresh_activities(client, athlete):
-    athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
-    activities_dir = os.path.join(athlete_dir, 'activities')
-    if not os.path.isdir(activities_dir):
-        os.makedirs(activities_dir)
-
-    completed_file = os.path.join(activities_dir, 'COMPLETE')
-    if os.path.isfile(completed_file):
-        return
-
-    activities = client.get_activities(limit=200)
-    for activity in activities:
-        with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
-            json.dump(activity.to_dict(), f)
-
-    # touch file
-    open(completed_file, 'a').close()
-
-def load_activities(client, athlete, num=25, start=0):
+def get_saved_activity_ids(athlete):
     athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
     activities_dir = os.path.join(athlete_dir, 'activities')
 
     files = glob.glob(os.path.join(activities_dir, "*.json"))
     ids = [int(os.path.basename(fname).split('.')[0]) for fname in files]
     ids.sort()
-    ids = ids[::-1]
-    ids = ids[start:start+num]
+
+    return ids
+
+def refresh_activities(client, athlete, force=False, all=False):
+    print("refreshing activities, force={}, all={}".format(force, all))
+
+    athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
+    activities_dir = os.path.join(athlete_dir, 'activities')
+    if not os.path.isdir(activities_dir):
+        os.makedirs(activities_dir)
+
+    completed_file = os.path.join(activities_dir, 'COMPLETE')
+    if not force:
+        if os.path.isfile(completed_file):
+            with open(completed_file) as f:
+                last_sync = int(f.read() or 0)
+                if (int(time.time()) - last_sync) < 3600:
+                    print("last refresh was less than 3600 seconds ago and force=False")
+                    return
+
+    last_start_time = None
+    if not all:
+        ids = get_saved_activity_ids(athlete)
+        last_id = ids[-1]
+        with open(os.path.join(activities_dir, '{}.json'.format(last_id)), 'r') as f:
+            a = json.load(f)
+            last_start_time = datetime.strptime(a['start_date'], '%Y-%m-%dT%H:%M:%S+00:00')
+            print("last start time was {} ({})".format(a['start_date'], last_start_time))
+
+    activities = client.get_activities(limit=200, after=last_start_time)
+    count = 0
+    for activity in activities:
+        with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
+            json.dump(activity.to_dict(), f)
+        count = count + 1
+    print("retrieved {} activities".format(count))
+
+    # timestamp into file
+    with open(completed_file, 'w') as f:
+        f.write('{}'.format(int(time.time())))
+
+def load_activities(client, athlete, num=25, start=0):
+    athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
+    activities_dir = os.path.join(athlete_dir, 'activities')
+
+    ids = get_saved_activity_ids(athlete)
+    ids = ids[::-1]            # reverse
+    ids = ids[start:start+num] # slice
 
     activities = []
     for id in ids:
@@ -122,6 +155,18 @@ def load_activities(client, athlete, num=25, start=0):
 def show_login():
     page = request.args.get('page')
     return strava_login(page=page)
+
+@bp.route('/settings')
+def show_settings():
+
+    try:
+        client, athlete = create_context()
+        return render_template(
+                               'locs/settings.html', a=athlete,
+                               menu=main_menu, active_name='settings')
+    except (NoToken, AccessUnauthorized):
+        return strava_login('/settings')
+
 
 @bp.route('/athlete')
 def show_athlete():
@@ -170,6 +215,16 @@ def show_activity():
     except ObjectNotFound:
         return render_template('404.html', object="activity",
                                menu=main_menu, active_name='activities'), 404
+
+@bp.route('/api/sync_activities')
+def api_sync_activities():
+    sync_all = {'true' : True, 'false' : False}[request.args.get('all').lower()]
+    try:
+        client, athlete = create_context()
+        refresh_activities(client, athlete, force=True, all=sync_all)
+        return json.dumps({'success':'ok'})
+    except (NoToken, AccessUnauthorized):
+        return json.dumps({'error' : 'unauthorized'}), 401
 
 @bp.route('/api/set_search', methods=['POST'])
 def api_set_search():
