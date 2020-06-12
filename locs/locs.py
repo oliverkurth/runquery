@@ -61,6 +61,21 @@ def strava_login(page=None):
 
     return redirect(authorize_url, code=302)
 
+def refresh_token(client):
+    token_struct = session.get('token_struct')
+    try:
+        expires_at = token_struct['expires_at']
+        refresh_token=token_struct['refresh_token']
+    except KeyError:
+        raise NoToken
+    if time.time() > expires_at:
+        refresh_response = client.refresh_access_token(
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            refresh_token=refresh_token)
+        session['token_struct'] = refresh_response
+        print("refreshed token = {}".format(refresh_response))
+
 def create_context():
     token_struct = session.get('token_struct')
     if token_struct == None:
@@ -72,8 +87,8 @@ def create_context():
         raise NoToken
 
     client = Client(access_token=access_token)
-
     try:
+        refresh_token(client)
         athlete = client.get_athlete()
     except AccessUnauthorized:
         raise
