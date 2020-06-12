@@ -34,21 +34,18 @@
       }).addTo(map);
     L.control.scale().addTo(map);
 
-    var encodedRoutes = ["{{a.map.summary_polyline|replace('\\', '\\\\')|safe}}"]
+    var encoded = "{{a.map.summary_polyline|replace('\\', '\\\\')|safe}}";
+    var coordinates = L.Polyline.fromEncoded(encoded).getLatLngs();
 
-    for (let encoded of encodedRoutes) {
-      var coordinates = L.Polyline.fromEncoded(encoded).getLatLngs();
-
-      L.polyline(
-          coordinates,
-          {
-              color: 'blue',
-              weight: 2,
-              opacity: .7,
-              lineJoin: 'round'
-          }
-      ).addTo(map);
-    }
+    L.polyline(
+        coordinates,
+        {
+            color: 'blue',
+            weight: 2,
+            opacity: .7,
+            lineJoin: 'round'
+        }
+    ).addTo(map);
 
 </script>
 
