@@ -97,6 +97,9 @@ def create_context():
     if not os.path.isdir(athlete_dir):
         os.makedirs(athlete_dir)
 
+    with open(os.path.join(athlete_dir, 'athlete.json'), 'w') as f:
+        json.dump(athlete.to_dict(), f)
+
     return client, athlete
 
 def get_saved_activity_ids(athlete):
