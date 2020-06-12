@@ -252,7 +252,6 @@ def api_sync_activities():
 def api_set_search():
 
     filter = request.get_json(force=True)
-    print(filter)
     try:
         client, athlete = create_context()
         refresh_activities(client, athlete)
@@ -283,6 +282,8 @@ def api_set_search():
 
         if filter.get('within_bounds'):
             bounds = filter.get('mapbounds')
+            bounds = [ bounds['_southWest']['lat'], bounds['_southWest']['lng'],
+                       bounds['_northEast']['lat'], bounds['_northEast']['lng'] ]
 
         matched = []
         for a in activities:
@@ -331,10 +332,8 @@ def api_set_search():
             if bounds != None:
                 lat = a.start_latitude
                 lng = a.start_longitude
-                if lat < bounds['_southWest']['lat'] or \
-                   lng < bounds['_southWest']['lng'] or \
-                   lat > bounds['_northEast']['lat'] or \
-                   lng > bounds['_northEast']['lng'] :
+                if lat < bounds[0] or lng < bounds[1] or \
+                   lat > bounds[2] or lng > bounds[3] :
                     continue
 
             matched.append(a)
