@@ -55,7 +55,7 @@ def strava_login(page=None):
     client = Client()
     url = url_for('locs.authorized', _external=True, page=page)
     authorize_url = client.authorization_url(
-        scope='activity:read_all',
+        scope=['profile:read_all','activity:read_all'],
         client_id=CLIENT_ID,
         redirect_uri=url)
 
@@ -171,7 +171,7 @@ def load_activities(client, athlete, num=25, start=0):
 
 @bp.route('/login')
 def show_login():
-    page = request.args.get('page')
+    page = request.args.get('page') or '/athlete'
     return strava_login(page=page)
 
 @bp.route('/settings')
@@ -219,16 +219,20 @@ def show_activity():
     try:
         client, athlete = create_context()
 
-        refresh_activities(client, athlete)
-
         athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
         activities_dir = os.path.join(athlete_dir, 'activities', 'detailed')
         if not os.path.isdir(activities_dir):
             os.makedirs(activities_dir)
 
-        activity = client.get_activity(id)
-        with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
-            json.dump(activity.to_dict(), f)
+        filename = os.path.join(activities_dir, '{}.json'.format(id))
+        if os.path.isfile(filename):
+            with open(filename, 'r') as f:
+                activity = stravalib.model.Activity()
+                activity.from_dict(json.load(f))
+        else:
+            activity = client.get_activity(id)
+            with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
+                json.dump(activity.to_dict(), f)
         return render_template(
                                'locs/activity.html', a=activity,
                                menu=main_menu, active_name='activities')
