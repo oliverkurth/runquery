@@ -203,7 +203,14 @@ def show_activity():
 
         refresh_activities(client, athlete)
 
+        athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
+        activities_dir = os.path.join(athlete_dir, 'activities', 'detailed')
+        if not os.path.isdir(activities_dir):
+            os.makedirs(activities_dir)
+
         activity = client.get_activity(id)
+        with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
+            json.dump(activity.to_dict(), f)
         return render_template(
                                'locs/activity.html', a=activity,
                                menu=main_menu, active_name='activities')
