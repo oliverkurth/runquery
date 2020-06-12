@@ -74,7 +74,7 @@ function set_search_cb(status, result, data) {
         document.getElementById('status').innerHTML = 'found ' + result.length + ' results';
         table = document.getElementById('activities');
         for (let a of result) {
-            a['anchor'] = "<a href='" + a.link + "' target='_blank'>" + a.name + "</a>";
+            a['anchor'] = "<a href='" + a.link + "'>" + a.name + "</a>";
         }
         generate_table(table, result);
         display_markers(result);

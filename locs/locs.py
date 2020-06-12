@@ -3,6 +3,7 @@
 import stravalib
 from stravalib.client import Client
 from stravalib.exc import AccessUnauthorized, ObjectNotFound
+from stravalib import unithelper
 import polyline
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app
@@ -169,6 +170,39 @@ def load_activities(client, athlete, num=25, start=0):
 
     return activities
 
+def activity_dict(athlete, a):
+    if athlete.measurement_preference == 'feet':
+        distance = str(unithelper.miles(a.distance))
+        gain = str(unithelper.feet(a.total_elevation_gain))
+        if a.type == 'Ride':
+            speed = str(unithelper.mph(a.average_speed))
+        else:
+            speed = "{0:.2f} /mi".format(60/(unithelper.mph(a.average_speed).num))
+    else:
+        distance = str(unithelper.kilometers(a.distance))
+        gain = str(unithelper.meters(a.total_elevation_gain))
+        if a.type == 'Ride':
+            speed = str(unithelper.kph(a.average_speed))
+        else:
+            speed = "{0:.2f} /km".format(60/(unithelper.kph(a.average_speed).num))
+
+    date = a.start_date_local.strftime(athlete.date_preference or "%a, %d %b %Y")
+
+    return {
+            'link' : url_for('locs.show_activity', id=a.id),
+            'strava_link' : 'https://www.strava.com/activities/{}'.format(a.id),
+            'name' : a.name,
+            'type' : a.type,
+            'date' : date,
+            'distance' : distance,
+            'gain' : gain,
+            'elapsed_time' : a.elapsed_time,
+            'moving_time' : a.moving_time,
+            'speed' : speed,
+            'start_latlng' : [a.start_latitude, a.start_longitude],
+            'polyline' : a.map.polyline or a.map.summary_polyline
+        }
+
 @bp.route('/login')
 def show_login():
     page = request.args.get('page') or '/athlete'
@@ -233,8 +267,9 @@ def show_activity():
             activity = client.get_activity(id)
             with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
                 json.dump(activity.to_dict(), f)
+        activity.id = id
         return render_template(
-                               'locs/activity.html', a=activity,
+                               'locs/activity.html', a=activity_dict(athlete, activity),
                                menu=main_menu, active_name='activities')
 
     except NoToken:
@@ -287,6 +322,7 @@ def api_set_search():
         min_gain = int(filter.get('min_gain') or 0)
         max_gain = int(filter.get('max_gain') or 0)
 
+        bounds = None
         if filter.get('within_bounds'):
             bounds = filter.get('mapbounds')
             bounds = [ bounds['_southWest']['lat'], bounds['_southWest']['lng'],
@@ -347,15 +383,7 @@ def api_set_search():
 
         results = []
         for m in matched:
-            results.append({
-                'link' : 'https://www.strava.com/activities/{}'.format(m.id),
-                'name' : m.name,
-                'type' : m.type,
-                'date' : m.start_date_local.strftime("%a, %d %b %Y"),
-                'distance' : int(m.distance),
-                'gain' : int(m.total_elevation_gain),
-                'start_latlng' : [m.start_latitude, m.start_longitude]
-            })
+            results.append(activity_dict(athlete, m))
  
         return(json.dumps(results))
     except (NoToken, AccessUnauthorized):

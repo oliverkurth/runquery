@@ -13,15 +13,17 @@
 {% block content %}
 <table class="main">
 <tr>
-<td>id:</td><td>{{a.id}}</td>
+<td>Name:</td><td><a href = "{{a['strava_link']}}" target="_blank">{{a['name']}}</a></td>
 </tr><tr>
-<td>Name:</td><td>{{a.name}}</td>
+<td>Distance:</td><td>{{a['distance']}}</td>
+<td>Gain:</td><td>{{a['gain']}}</td>
 </tr><tr>
-<td>Distance:</td><td>{{a.distance}}</td>
+<td>Elapsed Time:</td><td>{{a['elapsed_time']}}</td>
+<td>Moving Time:</td><td>{{a['moving_time']}}</td>
 </tr><tr>
-<td>Elapsed Time:</td><td>{{a.elapsed_time}}</td>
+<td>Speed:</td><td>{{a['speed']}}</td>
 </tr><tr>
-<td>Type:</td><td>{{a.type}}</td>
+<td>Type:</td><td>{{a['type']}}</td>
 </tr>
 </table>
 
@@ -46,7 +48,7 @@
       }).addTo(map);
     L.control.scale().addTo(map);
 
-    var encoded = "{{a.map.summary_polyline|replace('\\', '\\\\')|safe}}";
+    var encoded = "{{a['polyline']|replace('\\', '\\\\')|safe}}";
     var coordinates = L.Polyline.fromEncoded(encoded).getLatLngs();
 
     L.polyline(
