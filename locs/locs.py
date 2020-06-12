@@ -281,7 +281,9 @@ def api_set_search():
         min_gain = int(filter.get('min_gain') or 0)
         max_gain = int(filter.get('max_gain') or 0)
 
-        #matched = activities
+        if filter.get('within_bounds'):
+            bounds = filter.get('mapbounds')
+
         matched = []
         for a in activities:
             if len(title_words) > 0:
@@ -324,6 +326,15 @@ def api_set_search():
 
             if max_gain > 0:
                 if int(a.total_elevation_gain) > max_gain:
+                    continue
+
+            if bounds != None:
+                lat = a.start_latitude
+                lng = a.start_longitude
+                if lat < bounds['_southWest']['lat'] or \
+                   lng < bounds['_southWest']['lng'] or \
+                   lat > bounds['_northEast']['lat'] or \
+                   lng > bounds['_northEast']['lng'] :
                     continue
 
             matched.append(a)

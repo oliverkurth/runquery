@@ -42,6 +42,18 @@ function generate_table(table, data) {
   }
 }
 
+function getBounds(activities) {
+    var sw = L.latLng(activities[0].start_latlng);
+    var ne = L.latLng(activities[0].start_latlng);
+    for (let a of activities) {
+         if (a.start_latlng[0] < sw.lat) { sw.lat = a.start_latlng[0]; }
+         if (a.start_latlng[1] < sw.lng) { sw.lng = a.start_latlng[1]; }
+         if (a.start_latlng[0] > ne.lat) { ne.lat = a.start_latlng[0]; }
+         if (a.start_latlng[1] > ne.lng) { ne.lng = a.start_latlng[1]; }
+    }
+    return L.latLngBounds(sw, ne);
+}
+
 var markers = [];
 function display_markers(data) {
     for (let marker of markers) {
@@ -53,6 +65,8 @@ function display_markers(data) {
         markers.push(marker);
         marker.bindPopup(a.date + "<br/>" + a.anchor);
     }
+    bounds = getBounds(data);
+    map.fitBounds(bounds);
 }
 
 function set_search_cb(status, result, data) {
@@ -107,6 +121,8 @@ function set_search() {
 </tr><tr>
 <td>Elevation greater than:</td><td><input type='text' size='5' id='min_gain'/></td>
 <td>Elevation less than:</td><td><input type='text' size='5' id='max_gain'/></td>
+</tr><tr>
+<td>Within map bounds:<input type="checkbox" size="20" id="within_bounds"></td>
 </tr><tr>
 <td><button type="button" onclick="set_search()">Search</button></td>
 <td><p id='status'></p></rd>
