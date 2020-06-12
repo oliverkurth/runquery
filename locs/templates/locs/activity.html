@@ -27,6 +27,18 @@
 
 <div id="mapid"></div>
 <script>
+    function getBounds(coords) {
+        var sw = L.latLng(coords[0].lat, coords[0].lng);
+        var ne = L.latLng(coords[0].lat, coords[0].lng);
+        for (let ll of coords) {
+             if (ll.lat < sw.lat) { sw.lat = ll.lat; }
+             if (ll.lng < sw.lng) { sw.lng = ll.lng; }
+             if (ll.lat > ne.lat) { ne.lat = ll.lat; }
+             if (ll.lng > ne.lng) { ne.lng = ll.lng; }
+        }
+        return L.latLngBounds(sw, ne);
+    }
+
     var map = L.map('mapid').setView([37.65, -121.9], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -46,6 +58,9 @@
             lineJoin: 'round'
         }
     ).addTo(map);
+
+    bounds = getBounds(coordinates);
+    map.fitBounds(bounds);
 
 </script>
 
