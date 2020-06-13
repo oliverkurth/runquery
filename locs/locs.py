@@ -16,7 +16,7 @@ from datetime import datetime
 import time
 
 CLIENT_ID='3724'
-CLIENT_SECRET='STRAVA_CLIENT_SECRET'
+CLIENT_SECRET=os.getenv('STRAVA_CLIENT_SECRET')
 
 bp = Blueprint('locs', __name__)
 
