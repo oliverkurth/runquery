@@ -139,7 +139,7 @@ def refresh_activities(client, athlete, force=False, all=False):
             last_start_time = datetime.strptime(a['start_date'], '%Y-%m-%dT%H:%M:%S+00:00')
             print("last start time was {} ({})".format(a['start_date'], last_start_time))
 
-    activities = client.get_activities(limit=200, after=last_start_time)
+    activities = client.get_activities(after=last_start_time)
     count = 0
     for activity in activities:
         with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
@@ -157,7 +157,8 @@ def load_activities(client, athlete, num=25, start=0):
 
     ids = get_saved_activity_ids(athlete)
     ids = ids[::-1]            # reverse
-    ids = ids[start:start+num] # slice
+    if num != None:
+        ids = ids[start:start+num] # slice
 
     activities = []
     for id in ids:
@@ -196,8 +197,8 @@ def activity_dict(athlete, a):
             'date' : date,
             'distance' : distance,
             'gain' : gain,
-            'elapsed_time' : a.elapsed_time,
-            'moving_time' : a.moving_time,
+            'elapsed_time' : str(a.elapsed_time),
+            'moving_time' : str(a.moving_time),
             'speed' : speed,
             'start_latlng' : [a.start_latitude, a.start_longitude],
             'polyline' : a.map.polyline or a.map.summary_polyline
@@ -297,7 +298,7 @@ def api_set_search():
     try:
         client, athlete = create_context()
         refresh_activities(client, athlete)
-        activities = load_activities(client, athlete, num=200)
+        activities = load_activities(client, athlete, num=None)
 
         title_words = (filter.get('title_words') or '').strip().split()
         title_words = [w.lower() for w in title_words] 
