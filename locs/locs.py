@@ -323,10 +323,17 @@ def api_set_search():
         if filter.get('date_after'):
             date_after = datetime.strptime(filter.get('date_after'), '%Y-%m-%d')
 
-        min_dist = int(filter.get('min_dist') or 0)
-        max_dist = int(filter.get('max_dist') or 0)
-        min_gain = int(filter.get('min_gain') or 0)
-        max_gain = int(filter.get('max_gain') or 0)
+        if athlete.measurement_preference == 'feet':
+            dist_unit = unithelper.miles
+            gain_unit = unithelper.feet
+        else:
+            dist_unit = unithelper.kilometers
+            gain_unit = unithelper.meters
+
+        min_dist = dist_unit(float(filter.get('min_dist') or 0))
+        max_dist = dist_unit(float(filter.get('max_dist') or 0))
+        min_gain = gain_unit(float(filter.get('min_gain') or 0))
+        max_gain = gain_unit(float(filter.get('max_gain') or 0))
 
         bounds = None
         if filter.get('within_bounds'):
@@ -362,20 +369,20 @@ def api_set_search():
                 if a.start_date_local < date_after:
                     continue
 
-            if min_dist > 0:
-                if int(a.distance) < min_dist:
+            if min_dist > dist_unit(0):
+                if a.distance < min_dist:
                     continue
 
-            if max_dist > 0:
-                if int(a.distance) > min_dist:
+            if max_dist > dist_unit(0):
+                if a.distance > max_dist:
                     continue
 
-            if min_gain > 0:
-                if int(a.total_elevation_gain) < min_gain:
+            if min_gain > gain_unit(0):
+                if a.total_elevation_gain < min_gain:
                     continue
 
-            if max_gain > 0:
-                if int(a.total_elevation_gain) > max_gain:
+            if max_gain > gain_unit(0):
+                if a.total_elevation_gain > max_gain:
                     continue
 
             if bounds != None:
