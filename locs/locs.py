@@ -178,14 +178,20 @@ def activity_dict(athlete, a):
         if a.type == 'Ride':
             speed = str(unithelper.mph(a.average_speed))
         else:
-            speed = "{0:.2f} /mi".format(60/(unithelper.mph(a.average_speed).num))
+            try:
+                speed = "{0:.2f} /mi".format(60/(unithelper.mph(a.average_speed).num))
+            except ZeroDivisionError:
+                speed = 'NaN'
     else:
         distance = str(unithelper.kilometers(a.distance))
         gain = str(unithelper.meters(a.total_elevation_gain))
         if a.type == 'Ride':
             speed = str(unithelper.kph(a.average_speed))
         else:
-            speed = "{0:.2f} /km".format(60/(unithelper.kph(a.average_speed).num))
+            try:
+                speed = "{0:.2f} /km".format(60/(unithelper.kph(a.average_speed).num))
+            except ZeroDivisionError:
+                speed = 'NaN'
 
     date = a.start_date_local.strftime(athlete.date_preference or "%a, %d %b %Y")
 
@@ -211,7 +217,6 @@ def show_login():
 
 @bp.route('/settings')
 def show_settings():
-
     try:
         client, athlete = create_context()
         return render_template(
