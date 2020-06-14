@@ -20,7 +20,6 @@ bp = Blueprint('query', __name__)
 
 main_menu = [
         {"name" : "settings", "link" : "/settings", "label" : "Settings"},
-        {"name" : "athlete", "link" : "/athlete", "label" : "Athlete"},
         {"name" : "search", "link" : "/search", "label" : "Search"},
 ]
 
@@ -208,7 +207,7 @@ def activity_dict(athlete, a):
 
 @bp.route('/login')
 def show_login():
-    page = request.args.get('page') or '/athlete'
+    page = request.args.get('page') or '/search'
     return strava_login(page=page)
 
 @bp.route('/settings')
@@ -220,17 +219,6 @@ def show_settings():
                                menu=main_menu, active_name='settings')
     except (NoToken, AccessUnauthorized):
         return strava_login('/settings')
-
-
-@bp.route('/athlete')
-def show_athlete():
-    try:
-        client, athlete = create_context()
-        return render_template(
-                               'query/athlete.html', a=athlete,
-                               menu=main_menu, active_name='athlete')
-    except (NoToken, AccessUnauthorized):
-        return strava_login('/athlete')
 
 @bp.route('/activity')
 def show_activity():
