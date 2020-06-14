@@ -4,11 +4,9 @@ import stravalib
 from stravalib.client import Client
 from stravalib.exc import AccessUnauthorized, ObjectNotFound
 from stravalib import unithelper
-import polyline
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app
 )
-import functools
 import os
 import glob
 import json
@@ -25,7 +23,6 @@ main_menu = [
         {"name" : "athlete", "link" : "/athlete", "label" : "Athlete"},
         {"name" : "activities", "link" : "/activities", "label" : "Activities"},
         {"name" : "search", "link" : "/search", "label" : "Search"},
-        {"name" : "map", "link" : "/map", "label" : "Map"},
 ]
 
 # helper to create directory tree without complains when it exists:
@@ -407,30 +404,4 @@ def show_search():
 
     return render_template('query/search.html',
                            menu=main_menu, active_name='search')
-
-@bp.route('/map')
-def show_map():
-    try:
-        client, athlete = create_context()
-        refresh_activities(client, athlete)
-        activities = load_activities(client, athlete, num=200)
-
-        start_points = []
-        for a in activities:
-            line = polyline.decode(a.map.summary_polyline)
-            start_points.append(line[0])
-
-        return render_template(
-                               'query/map.html',
-                               activities=activities,
-                               ids=[a.id for a in activities],
-                               dates = [a.start_date_local.strftime("%a, %d %b %Y") for a in activities],
-                               names=[a.name for a in activities],
-                               start_points=start_points,
-                               menu=main_menu, active_name='map')
-
-    except NoToken:
-        return strava_login()
-    except AccessUnauthorized:
-        return strava_login()
 
