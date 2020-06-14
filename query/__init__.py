@@ -1,15 +1,12 @@
 import os
-
 from flask import Flask
-
 import query
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        SECRET_KEY="piesakeGhieh3xeipheifaem7eijai9e"
-#        DATABASE=os.path.join(app.instance_path, 'strava_query.sqlite'),
+        SECRET_KEY=os.getenv('FLASK_SECRET_KEY')
     )
 
     if test_config is None:
