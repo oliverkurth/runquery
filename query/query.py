@@ -18,7 +18,7 @@ import time
 CLIENT_ID='3724'
 CLIENT_SECRET=os.getenv('STRAVA_CLIENT_SECRET')
 
-bp = Blueprint('locs', __name__)
+bp = Blueprint('query', __name__)
 
 main_menu = [
         {"name" : "settings", "link" : "/settings", "label" : "Settings"},
@@ -54,7 +54,7 @@ def authorized():
 
 def strava_login(page=None):
     client = Client()
-    url = url_for('locs.authorized', _external=True, page=page)
+    url = url_for('query.authorized', _external=True, page=page)
     authorize_url = client.authorization_url(
         scope=['profile:read_all','activity:read_all'],
         client_id=CLIENT_ID,
@@ -196,7 +196,7 @@ def activity_dict(athlete, a):
     date = a.start_date_local.strftime(athlete.date_preference or "%a, %d %b %Y")
 
     return {
-            'link' : url_for('locs.show_activity', id=a.id),
+            'link' : url_for('query.show_activity', id=a.id),
             'strava_link' : 'https://www.strava.com/activities/{}'.format(a.id),
             'name' : a.name,
             'type' : a.type,
@@ -220,7 +220,7 @@ def show_settings():
     try:
         client, athlete = create_context()
         return render_template(
-                               'locs/settings.html', a=athlete,
+                               'query/settings.html', a=athlete,
                                menu=main_menu, active_name='settings')
     except (NoToken, AccessUnauthorized):
         return strava_login('/settings')
@@ -231,7 +231,7 @@ def show_athlete():
     try:
         client, athlete = create_context()
         return render_template(
-                               'locs/athlete.html', a=athlete,
+                               'query/athlete.html', a=athlete,
                                menu=main_menu, active_name='athlete')
     except (NoToken, AccessUnauthorized):
         return strava_login('/athlete')
@@ -245,7 +245,7 @@ def show_activities():
 
         activities = load_activities(client, athlete)
         return render_template(
-                               'locs/activities.html', activities=activities,
+                               'query/activities.html', activities=activities,
                                menu=main_menu, active_name='activities')
 
     except NoToken:
@@ -275,7 +275,7 @@ def show_activity():
                 json.dump(activity.to_dict(), f)
         activity.id = id
         return render_template(
-                               'locs/activity.html', a=activity_dict(athlete, activity),
+                               'query/activity.html', a=activity_dict(athlete, activity),
                                menu=main_menu, active_name='activities')
 
     except NoToken:
@@ -405,7 +405,7 @@ def api_set_search():
 @bp.route('/search')
 def show_search():
 
-    return render_template('locs/search.html',
+    return render_template('query/search.html',
                            menu=main_menu, active_name='search')
 
 @bp.route('/map')
@@ -421,7 +421,7 @@ def show_map():
             start_points.append(line[0])
 
         return render_template(
-                               'locs/map.html',
+                               'query/map.html',
                                activities=activities,
                                ids=[a.id for a in activities],
                                dates = [a.start_date_local.strftime("%a, %d %b %Y") for a in activities],

@@ -2,14 +2,14 @@ import os
 
 from flask import Flask
 
-import locs
+import query
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY="piesakeGhieh3xeipheifaem7eijai9e"
-#        DATABASE=os.path.join(app.instance_path, 'strava_locs.sqlite'),
+#        DATABASE=os.path.join(app.instance_path, 'strava_query.sqlite'),
     )
 
     if test_config is None:
@@ -25,7 +25,7 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    app.register_blueprint(locs.bp)
+    app.register_blueprint(query.bp)
 
     # a simple page that says hello
     @app.route('/hello')
