@@ -1,0 +1,3 @@
+graft query/static
+graft query/templates
+global-exclude *.pyc app.env
