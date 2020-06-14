@@ -21,7 +21,6 @@ bp = Blueprint('query', __name__)
 main_menu = [
         {"name" : "settings", "link" : "/settings", "label" : "Settings"},
         {"name" : "athlete", "link" : "/athlete", "label" : "Athlete"},
-        {"name" : "activities", "link" : "/activities", "label" : "Activities"},
         {"name" : "search", "link" : "/search", "label" : "Search"},
 ]
 
@@ -233,23 +232,6 @@ def show_athlete():
     except (NoToken, AccessUnauthorized):
         return strava_login('/athlete')
 
-@bp.route('/activities')
-def show_activities():
-    try:
-        client, athlete = create_context()
-
-        refresh_activities(client, athlete)
-
-        activities = load_activities(client, athlete)
-        return render_template(
-                               'query/activities.html', activities=activities,
-                               menu=main_menu, active_name='activities')
-
-    except NoToken:
-        return strava_login()
-    except AccessUnauthorized:
-        return strava_login()
-
 @bp.route('/activity')
 def show_activity():
     id = request.args.get('id')
@@ -273,7 +255,7 @@ def show_activity():
         activity.id = id
         return render_template(
                                'query/activity.html', a=activity_dict(athlete, activity),
-                               menu=main_menu, active_name='activities')
+                               menu=main_menu, active_name='search')
 
     except NoToken:
         return strava_login()
@@ -281,7 +263,7 @@ def show_activity():
         return strava_login()
     except ObjectNotFound:
         return render_template('404.html', object="activity",
-                               menu=main_menu, active_name='activities'), 404
+                               menu=main_menu, active_name='search'), 404
 
 @bp.route('/api/sync_activities')
 def api_sync_activities():
