@@ -14,7 +14,8 @@ from datetime import datetime
 import time
 
 CLIENT_ID='3724'
-CLIENT_SECRET=os.getenv('STRAVA_CLIENT_SECRET')
+# we want an exception if unset
+CLIENT_SECRET=os.environ['STRAVA_CLIENT_SECRET']
 
 bp = Blueprint('query', __name__)
 
