@@ -25,6 +25,8 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    print("instance dir is {}".format(app.instance_path))
+
     app.register_blueprint(query.bp)
 
     # a simple page that says hello
@@ -33,4 +35,6 @@ def create_app(test_config=None):
         return 'Hello, World!'
 
     return app
+
+app = create_app()
 
