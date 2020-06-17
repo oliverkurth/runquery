@@ -129,11 +129,14 @@ def refresh_activities(client, athlete, force=False, all=False):
     last_start_time = None
     if not all:
         ids = get_saved_activity_ids(athlete)
-        last_id = ids[-1]
-        with open(os.path.join(activities_dir, '{}.json'.format(last_id)), 'r') as f:
-            a = json.load(f)
-            last_start_time = datetime.strptime(a['start_date'], '%Y-%m-%dT%H:%M:%S+00:00')
-            print("last start time was {} ({})".format(a['start_date'], last_start_time))
+        if len(ids) > 0:
+            last_id = ids[-1]
+            with open(os.path.join(activities_dir, '{}.json'.format(last_id)), 'r') as f:
+                a = json.load(f)
+                last_start_time = datetime.strptime(a['start_date'], '%Y-%m-%dT%H:%M:%S+00:00')
+                print("last start time was {} ({})".format(a['start_date'], last_start_time))
+        else:
+            print("no activities found, refreshing all")
 
     activities = client.get_activities(after=last_start_time)
     count = 0
