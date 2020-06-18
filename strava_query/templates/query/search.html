@@ -142,12 +142,22 @@ function set_search() {
 <div id="tab map" class="tabcontent">
 </div>
 <script>
-var map = L.map('tab map').setView([37.85, -119.55], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-  }).addTo(map);
-L.control.scale().addTo(map);
+    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+      });
+    var otm = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: 'Map data &copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org/">SRTM</a>. Map style &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+      })
+    var baseMaps = {
+        "Open Street Map": osm,
+        "Open Topo Map": otm,
+    };
+    var map = L.map('tab map', layers = [osm, otm]).setView([37.85, -119.55], 13);
+    osm.addTo(map);
+    L.control.scale().addTo(map);
+    L.control.layers(baseMaps).addTo(map);
 </script>
 
 {% endblock %}
