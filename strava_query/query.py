@@ -222,7 +222,7 @@ def show_settings():
                                'query/settings.html', a=athlete,
                                menu=main_menu, active_name='settings')
     except (NoToken, AccessUnauthorized):
-        return strava_login('/settings')
+        return strava_login(page='/settings')
 
 @bp.route('/activity')
 def show_activity():
@@ -250,7 +250,7 @@ def show_activity():
                                menu=main_menu, active_name='search')
 
     except (NoToken, AccessUnauthorized):
-        return strava_login()
+        return strava_login(page=url_for('query.show_activity', id=id))
     except ObjectNotFound:
         return render_template('404.html', object="activity",
                                menu=main_menu, active_name='search'), 404
@@ -267,7 +267,6 @@ def api_sync_activities():
 
 @bp.route('/api/set_search', methods=['POST'])
 def api_set_search():
-
     filter = request.get_json(force=True)
     try:
         client, athlete = create_context()
@@ -373,7 +372,14 @@ def api_set_search():
 
 @bp.route('/search')
 def show_search():
+    try:
+        client, athlete = create_context()
+        return render_template('query/search.html',
+                               menu=main_menu, active_name='search')
+    except (NoToken, AccessUnauthorized):
+        return strava_login(page='/search')
 
-    return render_template('query/search.html',
-                           menu=main_menu, active_name='search')
+@bp.route('/')
+def show_index():
+    return redirect('/search', code=302)
 
