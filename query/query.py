@@ -249,9 +249,7 @@ def show_activity():
                                'query/activity.html', a=activity_dict(athlete, activity),
                                menu=main_menu, active_name='search')
 
-    except NoToken:
-        return strava_login()
-    except AccessUnauthorized:
+    except (NoToken, AccessUnauthorized):
         return strava_login()
     except ObjectNotFound:
         return render_template('404.html', object="activity",
