@@ -5,14 +5,16 @@ WORKDIR /usr/src/app
 RUN apk add --no-cache \
         uwsgi-python \
         python \
+        git \
         py-pip
 COPY . .
 RUN rm -rf instance/
+RUN pip install git+https://github.com/oliverkurth/stravalib.git
 RUN pip install --no-cache-dir -r requirements.txt
 ENTRYPOINT ["./entrypoint.sh"]
 CMD [ "uwsgi", "--socket", "0.0.0.0:3031", \
                "--uid", "uwsgi", \
                "--plugins", "python", \
                "--protocol", "uwsgi", \
-               "--wsgi", "query:app" ]
+               "--wsgi", "strava_query:app" ]
 
