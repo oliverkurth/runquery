@@ -3,7 +3,7 @@ services:
   uwsgi-query:
     image: uwsgi-query
     volumes:
-      - query-instance:/usr/var/query-instance/
+      - query-instance:/usr/var/strava_query-instance/
     env_file:
       - app.env
 
