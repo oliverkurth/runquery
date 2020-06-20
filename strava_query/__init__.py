@@ -12,6 +12,9 @@ def create_app(test_config=None):
     if 'SERVER_NAME' in os.environ:
         app.config['SERVER_NAME'] = os.environ['SERVER_NAME']
 
+    if 'DEBUG_MODE' in os.environ:
+        app.config['DEBUG_MODE'] = True
+
     if test_config is None:
         # load the instance config, if it exists, when not testing
         app.config.from_pyfile('config.py', silent=True)

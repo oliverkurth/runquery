@@ -146,7 +146,11 @@ def refresh_activities(client, athlete, force=False, all=False):
         else:
             print("no activities found, refreshing all")
 
-    activities = client.get_activities(after=last_start_time)
+    limit = None
+    if current_app.config.get('DEBUG_MODE'):
+        limit = 200
+
+    activities = client.get_activities(after=last_start_time, limit=limit)
     count = 0
     for activity in activities:
         with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
