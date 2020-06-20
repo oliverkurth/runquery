@@ -19,6 +19,12 @@ function sync_cb(status, result, data){
 function sync_activities(sync_all){
     async_request('/api/sync_activities?all=' + sync_all, sync_cb, sync_all ? 'sync_all_status' : 'sync_recent_status');
 }
+
+function delete_athlete(){
+    if (confirm("Are you sure?")) {
+        async_request('/api/delete_athlete', sync_cb, 'delete_athlete_status');
+    }
+}
 </script>
 
 <table class="main">
@@ -29,13 +35,19 @@ function sync_activities(sync_all){
 </td>
 <td><button type="button" onclick="sync_activities(false)">Refresh recent activities</button></td>
 <td = id='sync_recent_status'></td>
-</tr><tr>
-<td>
-<p>This will force a refresh of all collected activities. This is only needed if changes have been made on strava.</p>
-</td>
-<td><button type="button" onclick="sync_activities(true)">Refresh all activities</button></td>
-<td id='sync_all_status'></td>
 </tr>
+
+<tr>
+<td><p>This will force a refresh of all collected activities. This is only needed if changes have been made on strava.</p></td>
+<td><button type="button" onclick="sync_activities(true)">Refresh all activities</button></td>
+</tr>
+
+<tr>
+<td><p>This will delete all your data collected from strava</p></td>
+<td><button type="button" onclick="delete_athlete()">Delete all data</button></td>
+<td id='delete_athlete_status'></td>
+</tr>
+
 </table>
 {% endblock %}
 

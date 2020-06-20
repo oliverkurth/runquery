@@ -12,6 +12,7 @@ import glob
 import json
 from datetime import datetime
 import time
+import shutil
 
 CLIENT_ID='3724'
 # we want an exception if unset
@@ -98,6 +99,11 @@ def create_context():
         json.dump(athlete.to_dict(), f)
 
     return client, athlete
+
+def delete_athlete(athlete):
+    athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
+    if os.path.isdir(athlete_dir):
+        shutil.rmtree(athlete_dir)
 
 def get_saved_activity_ids(athlete):
     athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
@@ -261,6 +267,15 @@ def api_sync_activities():
     try:
         client, athlete = create_context()
         refresh_activities(client, athlete, force=True, all=sync_all)
+        return json.dumps({'success':'ok'})
+    except (NoToken, AccessUnauthorized):
+        return json.dumps({'error' : 'unauthorized'}), 401
+
+@bp.route('/api/delete_athlete')
+def api_delete_athlete():
+    try:
+        client, athlete = create_context()
+        delete_athlete(athlete)
         return json.dumps({'success':'ok'})
     except (NoToken, AccessUnauthorized):
         return json.dumps({'error' : 'unauthorized'}), 401
