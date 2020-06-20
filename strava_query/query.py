@@ -49,14 +49,16 @@ def authorized():
     session['token_struct'] = token_struct
     return redirect(page, code=302)
 
-def strava_login(page=None):
+def strava_authorize_url(page=None):
     client = Client()
     url = url_for('query.authorized', _external=True, page=page)
-    authorize_url = client.authorization_url(
+    return client.authorization_url(
         scope=['profile:read_all','activity:read_all'],
         client_id=CLIENT_ID,
         redirect_uri=url)
 
+def strava_login(page=None):
+    authorize_url = strava_asuthorize_url(page)
     return redirect(authorize_url, code=302)
 
 def refresh_token(client):
@@ -396,5 +398,10 @@ def show_search():
 
 @bp.route('/')
 def show_index():
-    return redirect('/search', code=302)
+    try:
+        client, athlete = create_context()
+        return redirect('/search', code=302)
+    except (NoToken, AccessUnauthorized):
+        return render_template('query/connect.html', url=strava_authorize_url(page='/search'),
+                               menu=main_menu, active_name='search')
 

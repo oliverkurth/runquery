@@ -19,6 +19,9 @@ def create_app(test_config=None):
         # load the test config if passed in
         app.config.from_mapping(test_config)
 
+    if 'INSTANCE_DIR' in os.environ:
+        app.instance_path = os.environ['INSTANCE_DIR']
+
     # ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)
