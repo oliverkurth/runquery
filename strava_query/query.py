@@ -217,9 +217,9 @@ def activity_dict(athlete, a):
 
     workout_type = ''
     if a.type == 'Run':
-        workout_type = ['', 'Race', 'Long Run', 'Workout'][int(a.workout_type)]
+        workout_type = ['', 'Race', 'Long Run', 'Workout'][int(a.workout_type or 0)]
 
-    garmin_id = ''
+    garmin_link = ''
     if a.external_id:
         if a.external_id.startswith('garmin_push_'):
             garmin_id = a.external_id.split('_')[2]
