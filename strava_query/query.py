@@ -13,6 +13,7 @@ import json
 from datetime import datetime
 import time
 import shutil
+import calendar
 
 CLIENT_ID='3724'
 # we want an exception if unset
@@ -183,40 +184,62 @@ def load_activities(client, athlete, num=25, start=0):
     return activities
 
 def activity_dict(athlete, a):
+    elapsed_time = unithelper.seconds(a.elapsed_time.total_seconds())
     if athlete.measurement_preference == 'feet':
         distance = str(unithelper.miles(a.distance))
         gain = str(unithelper.feet(a.total_elevation_gain))
         if a.type == 'Ride':
             speed = str(unithelper.mph(a.average_speed))
+            elapsed_speed = str(unithelper.mph(a.distance/elapsed_time))
         else:
             try:
                 speed = "{0:.2f} /mi".format(60/(unithelper.mph(a.average_speed).num))
+                elapsed_speed = "{0:.2f} /mi".format(60/unithelper.mph(a.distance/elapsed_time).num)
             except ZeroDivisionError:
                 speed = 'NaN'
+                elapsed_speed = 'NaN'
     else:
         distance = str(unithelper.kilometers(a.distance))
         gain = str(unithelper.meters(a.total_elevation_gain))
         if a.type == 'Ride':
             speed = str(unithelper.kph(a.average_speed))
+            elapsed_speed = str(unithelper.kph(a.distance/elapsed_time))
         else:
             try:
                 speed = "{0:.2f} /km".format(60/(unithelper.kph(a.average_speed).num))
+                elapsed_speed = "{0:.2f} /km".format(60/unithelper.kph(a.distance/elapsed_time).num)
             except ZeroDivisionError:
                 speed = 'NaN'
+                elapsed_speed = 'NaN'
 
     date = a.start_date_local.strftime(athlete.date_preference or "%a, %d %b %Y")
+    weekday = calendar.day_name[a.start_date_local.weekday()]
+
+    workout_type = ''
+    if a.type == 'Run':
+        workout_type = ['', 'Race', 'Long Run', 'Workout'][int(a.workout_type)]
+
+    garmin_id = ''
+    if a.external_id:
+        if a.external_id.startswith('garmin_push_'):
+            garmin_id = a.external_id.split('_')[2]
+            garmin_link = 'https://connect.garmin.com/modern/activity/{}'.format(garmin_id)
 
     return {
             'link' : url_for('query.show_activity', id=a.id),
             'strava_link' : 'https://www.strava.com/activities/{}'.format(a.id),
+            'garmin_link' : garmin_link,
             'name' : a.name,
             'type' : a.type,
+            'workout_type' : workout_type,
             'date' : date,
+            'weekday' : weekday,
             'distance' : distance,
             'gain' : gain,
             'elapsed_time' : str(a.elapsed_time),
             'moving_time' : str(a.moving_time),
             'speed' : speed,
+            'elapsed_speed' : elapsed_speed,
             'start_latlng' : [a.start_latitude, a.start_longitude],
             'polyline' : a.map.polyline or a.map.summary_polyline
         }

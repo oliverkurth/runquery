@@ -13,17 +13,25 @@
 {% block content %}
 <table class="main">
 <tr>
-<td>Name:</td><td><a href = "{{a['strava_link']}}" target="_blank">{{a['name']}}</a></td>
+<td><b>{{a['name']|safe}}</b></td>
+<td><b>{{a['weekday']}}, {{a['date']}}</b></td>
 </tr><tr>
-<td>Distance:</td><td>{{a['distance']}}</td>
-<td>Gain:</td><td>{{a['gain']}}</td>
+<td>{{a['distance']}}</td>
+<td>{{a['gain']}} gain</td>
 </tr><tr>
-<td>Elapsed Time:</td><td>{{a['elapsed_time']}}</td>
-<td>Moving Time:</td><td>{{a['moving_time']}}</td>
+<td>{{a['moving_time']}} moving time</td>
+<td>{{a['elapsed_time']}} elapsed time</td>
 </tr><tr>
-<td>Speed:</td><td>{{a['speed']}}</td>
+<td>{{a['speed']}}</td>
+<td>{{a['elapsed_speed']}}</td>
 </tr><tr>
-<td>Type:</td><td>{{a['type']}}</td>
+<td>{{a['type']}}</td>
+<td>{{a['workout_type']}}</td>
+</tr><tr>
+<td><a href = "{{a['strava_link']}}" target="_blank">View on Strava</a></td>
+{% if a.garmin_link %}
+<td><a href = "{{a['garmin_link']}}" target="_blank">View on Garmin</a></td>
+{% endif %}
 </tr>
 </table>
 
