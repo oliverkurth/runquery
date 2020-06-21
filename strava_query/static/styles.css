@@ -13,7 +13,7 @@ ul.sidenav {
     list-style-type: none;
     margin: 0;
     padding: 0;
-    width: 15%;
+    width: 20%;
     background-color: #f1f1f1;
     position: fixed;
     height: 100%;
@@ -37,8 +37,15 @@ ul.sidenav li a:hover:not(.active) {
     color: white;
 }
 
+div.logos {
+    vertical-align: bottom;
+    height: 90px;
+    position:fixed;
+    bottom:0;
+}
+
 div.content {
-    margin-left: 15%;
+    margin-left: 20%;
     height: 1000px;
 }
 
@@ -47,12 +54,18 @@ div.content {
         width:100%;
         height:auto;
         position:relative;
+        overflow: visible;
     }
     ul.sidenav li a {
         float: left;
         padding: 15px;
     }
     div.content {margin-left:0;}
+    div.logos {
+        vertical-align: top;
+        float: right;
+	position: relative;
+    }
 }
 
 @media screen and (max-width: 400px){
