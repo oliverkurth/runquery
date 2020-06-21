@@ -55,7 +55,11 @@ function getBounds(activities) {
     return L.latLngBounds(sw, ne);
 }
 
+
+var layer_control = null;
+
 var markers = [];
+var starts_layer = L.layerGroup([]);
 
 function display_markers(data) {
     for (let marker of markers) {
@@ -63,15 +67,23 @@ function display_markers(data) {
     }
     for (let a of data) {
         p = a.start_latlng;
-        var marker = L.marker(p).addTo(map);
+        var marker = L.marker(p);
         markers.push(marker);
         marker.bindPopup(a.date + "<br/>" + a.anchor);
     }
+
+    layer_control.removeLayer(starts_layer);
+    starts_layer = L.layerGroup(markers);
+    layer_control.addOverlay(starts_layer, "Start Points");
+    starts_layer.addTo(map); // make it visible by default
+
     bounds = getBounds(data);
     map.fitBounds(bounds);
 }
 
 var lines = [];
+var lines_layer = L.layerGroup([]);
+
 function display_tracks(data) {
     for (let line of lines) {
         map.removeLayer(line);
@@ -90,6 +102,12 @@ function display_tracks(data) {
         ).addTo(map);
         lines.push(line);
     }
+
+    layer_control.removeLayer(lines_layer);
+    lines_layer = L.layerGroup(lines);
+    layer_control.addOverlay(lines_layer, "Tracks");
+    lines_layer.addTo(map); // make it visible by default
+
 }
 
 function set_search_cb(status, result, data) {
@@ -182,8 +200,8 @@ function set_search() {
 
     var map = L.map('tab map', layers = [osm, otm]).setView([37.85, -119.55], 13);
     osm.addTo(map);
+    layer_control = L.control.layers(baseMaps).addTo(map);
     L.control.scale().addTo(map);
-    L.control.layers(baseMaps).addTo(map);
 </script>
 
 {% endblock %}
