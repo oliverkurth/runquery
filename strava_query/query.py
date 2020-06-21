@@ -59,7 +59,7 @@ def strava_authorize_url(page=None):
         redirect_uri=url)
 
 def strava_login(page=None):
-    authorize_url = strava_asuthorize_url(page)
+    authorize_url = strava_authorize_url(page)
     return redirect(authorize_url, code=302)
 
 def refresh_token(client):
