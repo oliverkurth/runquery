@@ -6,8 +6,6 @@ A web app that lets you search for your strava activities by location, name, dis
 Create a file called `app.env` with your keys:
 
 ```
-FLASK_APP=runquery
-FLASK_ENV=development
 FLASK_SECRET_KEY=<your secret flask key>
 STRAVA_CLIENT_SECRET=<your secret straa client key>
 SERVERNAME=<IP:PORT>
