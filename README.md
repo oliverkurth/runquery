@@ -29,7 +29,7 @@ Then test it with:
 
 ## For production
 
-`docker build -t uwsgi-query .`
+`docker build -t runquery .`
 
 Then run it with:
 
