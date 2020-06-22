@@ -9,11 +9,11 @@ def parse_requirements(filename):
 reqs = parse_requirements(os.path.join(os.path.dirname(__file__), 'requirements.txt'))
 
 setup(
-    name='strava-query',
+    name='runquery',
     version='0.1',
     author='Oliver Kurth',
     author_email='okurth@gmail.com',
-    url='http://github.com/oliverkurth/strava-query',
+    url='http://github.com/oliverkurth/runquery',
     license='Apache',
     description='Web App to search strava activities',
     packages=find_packages(),

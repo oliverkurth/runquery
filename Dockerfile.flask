@@ -1,0 +1,16 @@
+FROM alpine:3.7
+EXPOSE 3031
+VOLUME /usr/src/app/
+WORKDIR /usr/src/app
+RUN apk add --no-cache \
+        uwsgi-python \
+        python \
+        git \
+        py-pip
+RUN pip install flask
+RUN pip install git+https://github.com/oliverkurth/stravalib.git@fix-from-to-dict
+USER 1000
+ENV INSTANCE_DIR ./instance
+ENV DEBUG_MODE TRUE
+CMD [ "python", "-m", "flask", "run", "-h", "0.0.0.0", "-p", "8282"] 
+

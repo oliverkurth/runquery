@@ -17,5 +17,5 @@ CMD [ "uwsgi", "--socket", "0.0.0.0:3031", \
                "--uid", "uwsgi", \
                "--plugins", "python", \
                "--protocol", "uwsgi", \
-               "--wsgi", "strava_query:app" ]
+               "--wsgi", "runquery:app" ]
 
