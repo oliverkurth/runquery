@@ -65,6 +65,8 @@ function display_markers(data) {
     for (let marker of markers) {
         map.removeLayer(marker);
     }
+    markers = [];
+
     for (let a of data) {
         p = a.start_latlng;
         var marker = L.marker(p);
@@ -88,6 +90,8 @@ function display_tracks(data) {
     for (let line of lines) {
         map.removeLayer(line);
     }
+    lines = [];
+
     for (let a of data) {
         var coordinates = L.Polyline.fromEncoded(a.polyline).getLatLngs();
 
