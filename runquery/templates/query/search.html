@@ -111,7 +111,6 @@ function display_tracks(data) {
     lines_layer = L.layerGroup(lines);
     layer_control.addOverlay(lines_layer, "Tracks");
     lines_layer.addTo(map); // make it visible by default
-
 }
 
 function set_search_cb(status, result, data) {
@@ -148,6 +147,13 @@ function set_search() {
     document.getElementById("btn default tab").click();
 }
 
+/* save map view in cookie */
+function on_moveend(e){
+    center = map.getCenter();
+    zoom = map.getZoom();
+    view = {"lat" : center.lat, "lng": center.lng, "zoom" : zoom};
+    set_cookie("view", JSON.stringify(view), 365);
+}
 
 </script>
 
@@ -206,6 +212,17 @@ function set_search() {
     osm.addTo(map);
     layer_control = L.control.layers(baseMaps).addTo(map);
     L.control.scale().addTo(map);
+
+    try {
+        view = JSON.parse(get_cookie("view"));
+        if (view) {
+            map.setView(L.latLng(view.lat, view.lng), view.zoom);
+        }
+    } catch (error) {
+        console.log(error);
+    }
+
+    map.on('moveend', on_moveend);
 </script>
 
 {% endblock %}
