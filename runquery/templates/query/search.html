@@ -155,6 +155,14 @@ function on_moveend(e){
 
 </script>
 
+{% if athlete.measurement_preference == 'feet' %}
+{%  set unit_elev = 'feet' %}
+{%  set unit_dist = 'miles' %}
+{% else %}
+{%  set unit_elev = 'meters' %}
+{%  set unit_dist = 'km' %}
+{% endif %}
+
 <table class="main">
 <tr>
 <td>Title contains:</td><td colspan='3'><input type='text' size='100' id='title_words'/></td>
@@ -166,11 +174,11 @@ function on_moveend(e){
 <td>Date after:</td><td><input type='date' size='50' id='date_after'/></td>
 <td>Date before:</td><td><input type='date' size='50' id='date_before'/></td>
 </tr><tr>
-<td>Distance greater than:</td><td><input type='text' size='5' id='min_dist'/></td>
-<td>Distance less than:</td><td><input type='text' size='5' id='max_dist'/></td>
+<td>Distance greater than:</td><td><input type='text' size='5' id='min_dist'/> {{unit_dist}}</td>
+<td>Distance less than:</td><td><input type='text' size='5' id='max_dist'/> {{unit_dist}}</td>
 </tr><tr>
-<td>Elevation greater than:</td><td><input type='text' size='5' id='min_gain'/></td>
-<td>Elevation less than:</td><td><input type='text' size='5' id='max_gain'/></td>
+<td>Elevation greater than:</td><td><input type='text' size='5' id='min_gain'/> {{unit_elev}}</td>
+<td>Elevation less than:</td><td><input type='text' size='5' id='max_gain'/> {{unit_elev}}</td>
 </tr><tr>
 <td>Within map bounds:<input type="checkbox" size="20" id="within_bounds"></td>
 </tr><tr>

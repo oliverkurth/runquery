@@ -14,6 +14,7 @@ from datetime import datetime
 import time
 import shutil
 import calendar
+import math
 
 CLIENT_ID='3724'
 # we want an exception if unset
@@ -309,6 +310,11 @@ def api_delete_athlete():
     except (NoToken, AccessUnauthorized):
         return json.dumps({'error' : 'unauthorized'}), 401
 
+# When user zoomed out of the map too far and into one
+# of the parallel worlds longitudes may be out of range
+def normalizeValue(value, norm):
+   return (value + norm) % (norm * 2) - norm
+
 @bp.route('/api/set_search', methods=['POST'])
 def api_set_search():
     filter = request.get_json(force=True)
@@ -350,8 +356,10 @@ def api_set_search():
         bounds = None
         if filter.get('within_bounds'):
             bounds = filter.get('mapbounds')
-            bounds = [ bounds['_southWest']['lat'], bounds['_southWest']['lng'],
-                       bounds['_northEast']['lat'], bounds['_northEast']['lng'] ]
+            bounds = [ normalizeValue(bounds['_southWest']['lat'], 90),
+                       normalizeValue(bounds['_southWest']['lng'], 180),
+                       normalizeValue(bounds['_northEast']['lat'], 90),
+                       normalizeValue(bounds['_northEast']['lng'], 180)]
 
         matched = []
         for a in activities:
@@ -419,7 +427,7 @@ def show_search():
     try:
         client, athlete = create_context()
         return render_template('query/search.html',
-                               menu=main_menu, active_name='search')
+                               athlete=athlete, menu=main_menu, active_name='search')
     except (NoToken, AccessUnauthorized):
         return strava_login(page='/search')
 
