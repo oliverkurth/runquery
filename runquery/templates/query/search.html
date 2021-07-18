@@ -43,6 +43,17 @@ function generate_table(table, data) {
   }
 }
 
+function display_stats(stats) {
+    for (s of ['total', 'per_activity']) {
+        for (m of ['dist', 'elevation', 'time']) {
+            id = 'stats_' + s + '_' + m;
+            document.getElementById(id).innerHTML = stats[s][m];
+        }
+    }
+    document.getElementById('stats_speed').innerHTML = stats.per_time.speed;
+    document.getElementById('stats_pace').innerHTML = stats.per_dist.pace;
+}
+
 function getBounds(activities) {
     var sw = L.latLng(activities[0].start_latlng);
     var ne = L.latLng(activities[0].start_latlng);
@@ -54,7 +65,6 @@ function getBounds(activities) {
     }
     return L.latLngBounds(sw, ne);
 }
-
 
 var layer_control = null;
 
@@ -113,16 +123,21 @@ function display_tracks(data) {
     lines_layer.addTo(map); // make it visible by default
 }
 
-function set_search_cb(status, result, data) {
+function set_search_cb(status, ret, data) {
     if (status == 200) {
+	console.log(ret);
+	result = ret.results;
         document.getElementById('status').innerHTML = 'found ' + result.length + ' results';
         table = document.getElementById('activities');
         for (let a of result) {
             a['anchor'] = "<a href='" + a.link + "'>" + a.name + "</a>";
         }
+
         generate_table(table, result);
         display_markers(result);
         display_tracks(result);
+
+        display_stats(ret.stats);
     } else if (status == 401) {
         window.location.href = '/login?page=/search';
     }
@@ -190,6 +205,7 @@ function on_moveend(e){
 <div class="tab">
   <button class="tab button" onclick='display_tab("tab list")' id='btn tab list'>List</button>
   <button class="tab button" onclick='display_tab("tab map")' id='btn tab map'>Map</button>
+  <button class="tab button" onclick='display_tab("tab stats")' id='btn tab stats'>Stats</button>
 </div>
 
 <div id="tab list" class="tabcontent">
@@ -232,6 +248,21 @@ function on_moveend(e){
 
     display_tab("tab map");
 </script>
+
+<div id="tab stats" class="tabcontent">
+<table class="main" id="stats">
+<tr><td><b>Totals</b></td></tr>
+<tr><td>Distance</td><td id='stats_total_dist'></tr>
+<tr><td>Elevation</td><td id='stats_total_elevation'></tr>
+<tr><td>Time</td><td id='stats_total_time'></tr>
+<tr><td><b>Per Activity</b></td></tr>
+<tr><td>Distance</td><td id='stats_per_activity_dist'></tr>
+<tr><td>Elevation</td><td id='stats_per_activity_elevation'></tr>
+<tr><td>Time</td><td id='stats_per_activity_time'></tr>
+<tr><td><b>Pace</b></td><td id='stats_pace'></tr>
+<tr><td><b>Speed</b></td><td id='stats_speed'></tr>
+</table>
+</div>
 
 {% endblock %}
 

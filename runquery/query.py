@@ -15,6 +15,7 @@ import time
 import shutil
 import calendar
 import math
+import units
 
 CLIENT_ID='3724'
 # we want an exception if unset
@@ -291,6 +292,104 @@ def show_activity():
         return render_template('404.html', object="activity",
                                menu=main_menu, active_name='search'), 404
 
+def calc_stats(athlete, activities):
+    stats = {}
+    subs = ['total', 'per_activity', 'per_time', 'per_dist']
+    metrics = ['dist', 'time', 'elevation']
+
+    if athlete.measurement_preference != 'feet':
+        units_used = {
+            #'dist': unithelper.kilometers, # km results in 0 per_dist stats, reason unknown
+            'dist': unithelper.meters,
+            'time' : unithelper.seconds,
+            'elevation': unithelper.meters
+        }
+    else:
+        units_used = {
+            'dist': unithelper.miles,
+            'time' : unithelper.seconds,
+            'elevation' : unithelper.feet
+        }
+
+    count = len(activities)
+
+    for sub in subs:
+        stats[sub] = {}
+        for m in metrics:
+            stats[sub][m] = units_used[m](0.0)
+
+    stats_total = stats['total']
+    for a in activities:
+        stats_total['dist'] += a.distance
+	stats_total['time'] += unithelper.seconds(float(a.elapsed_time.total_seconds()))
+        stats_total['elevation'] += a.total_elevation_gain
+
+    stats_count = stats['per_activity']
+    for m in metrics:
+        stats_count[m] = stats_total[m] / count
+
+    stats_time = stats['per_time']
+    for m in metrics:
+        stats_time[m] = stats_total[m] / stats_total['time']
+
+    stats_dist = stats['per_dist']
+    for m in metrics:
+        stats_dist[m] = stats_total[m] / stats_total['dist']
+
+    stats['count'] = count
+
+    return stats
+
+def _seconds_to_timestr(seconds):
+    seconds = int(seconds)
+    h = seconds / 3600
+    m = seconds / 60 % 60
+    s = seconds % 60
+    return '{}:{}:{}'.format(h, m, s)
+
+def stats_localize(athlete, stats):
+
+    if athlete.measurement_preference != 'feet':
+        ath_units = {
+            'dist': unithelper.kilometers,
+            'time' : unithelper.seconds,
+            'elevation': unithelper.meters,
+            'speed': unithelper.kph,
+            'pace': units.unit('min')/unithelper.kilometers,
+        }
+    else:
+        ath_units = {
+            'dist': unithelper.miles,
+            'time' : unithelper.seconds,
+            'elevation' : unithelper.feet,
+            'speed': unithelper.mph,
+            'pace': units.unit('min')/unithelper.miles
+        }
+
+    sdict = {}
+
+    sdict_total = {}
+    sdict_total['dist'] = str(ath_units['dist'](stats['total']['dist']))
+    sdict_total['elevation'] = str(ath_units['elevation'](stats['total']['elevation']))
+    sdict_total['time'] = _seconds_to_timestr(stats['total']['time'])
+    sdict['total'] = sdict_total
+
+    sdict_per_activity = {}
+    sdict_per_activity['dist'] = str(ath_units['dist'](stats['per_activity']['dist']))
+    sdict_per_activity['elevation'] = str(ath_units['elevation'](stats['per_activity']['elevation']))
+    sdict_per_activity['time'] = _seconds_to_timestr(stats['per_activity']['time'])
+    sdict['per_activity'] = sdict_per_activity
+
+    sdict_per_time = {}
+    sdict_per_time['speed'] = str(ath_units['speed'](stats['per_time']['dist']))
+    sdict['per_time'] = sdict_per_time
+
+    sdict_per_dist = {}
+    sdict_per_dist['pace'] = str(ath_units['pace'](stats['per_dist']['time']))
+    sdict['per_dist'] = sdict_per_dist
+
+    return sdict
+
 @bp.route('/api/sync_activities')
 def api_sync_activities():
     sync_all = {'true' : True, 'false' : False}[request.args.get('all').lower()]
@@ -414,11 +513,16 @@ def api_set_search():
 
             matched.append(a)
 
+	stats_localized = {}
+	if len(matched) > 0:
+            stats = calc_stats(athlete, matched)
+	    stats_localized = stats_localize(athlete, stats)
+
         results = []
         for m in matched:
             results.append(activity_dict(athlete, m))
  
-        return(json.dumps(results))
+        return(json.dumps({'results' : results, 'stats' : stats_localized }))
     except (NoToken, AccessUnauthorized):
         return json.dumps({'error' : 'unauthorized'}), 401
 
