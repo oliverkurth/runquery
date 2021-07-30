@@ -1,3 +1,4 @@
+<body onload="request_all()">
 {% extends 'base.html' %}
 
 {% block header %}
@@ -11,6 +12,44 @@
 {% endblock %}
 
 {% block content %}
+<script src="static/functions.js" type="text/javascript"></script>
+<script>
+
+var layer_control = null;
+
+var markers = [];
+var photos_layer = L.layerGroup([]);
+
+function display_photos(status, photos, cbdata)
+{
+    if (status!= 200) {
+        console.log("got status " + status);
+    }
+
+    for (let marker of markers) {
+        map.removeLayer(marker);
+    }
+    markers = [];
+
+    for (let photo of photos) {
+        p = photo.latlng;
+        var marker = L.marker(p);
+        markers.push(marker);
+//        marker.bindPopup(a.date + "<br/>" + a.anchor);
+    }
+
+    layer_control.removeLayer(photos_layer);
+    starts_layer = L.layerGroup(markers);
+    layer_control.addOverlay(photos_layer, "Photos");
+    starts_layer.addTo(map); // make it visible by default
+}
+
+function request_all() {
+    async_request('/api/get_photos?id=' + {{ a['id'] }}, display_photos, null);
+}
+
+</script>
+
 <table class="main">
 <tr>
 <td><b>{{a['name']|safe}}</b></td>
@@ -87,4 +126,5 @@
 </script>
 
 {% endblock %}
+</body>
 

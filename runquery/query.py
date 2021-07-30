@@ -120,6 +120,25 @@ def get_saved_activity_ids(athlete):
 
     return ids
 
+def dir_is_complete(directory, force, max_age=None):
+    if not force:
+        completed_file = os.path.join(directory, 'COMPLETE')
+        if os.path.isfile(completed_file):
+            if max_age == None:
+                return True
+            with open(completed_file) as f:
+                last_sync = int(f.read() or 0)
+                if (int(time.time()) - last_sync) < max_age:
+                    print("{}: last refresh was less than {} seconds ago and force=False".format(directory, max_age))
+                    return True
+    return False
+
+def dir_set_complete(directory):
+    completed_file = os.path.join(directory, 'COMPLETE')
+    # timestamp into file
+    with open(completed_file, 'w') as f:
+        f.write('{}'.format(int(time.time())))
+
 def refresh_activities(client, athlete, force=False, all=False):
     print("refreshing activities, force={}, all={}".format(force, all))
 
@@ -128,14 +147,8 @@ def refresh_activities(client, athlete, force=False, all=False):
     if not os.path.isdir(activities_dir):
         os.makedirs(activities_dir)
 
-    completed_file = os.path.join(activities_dir, 'COMPLETE')
-    if not force:
-        if os.path.isfile(completed_file):
-            with open(completed_file) as f:
-                last_sync = int(f.read() or 0)
-                if (int(time.time()) - last_sync) < 3600:
-                    print("last refresh was less than 3600 seconds ago and force=False")
-                    return
+    if dir_is_complete(activities_dir, force, max_age=3600):
+        return
 
     last_start_time = None
     if not all:
@@ -161,9 +174,7 @@ def refresh_activities(client, athlete, force=False, all=False):
         count = count + 1
     print("retrieved {} activities".format(count))
 
-    # timestamp into file
-    with open(completed_file, 'w') as f:
-        f.write('{}'.format(int(time.time())))
+    dir_set_complete(activities_dir)
 
 def load_activities(client, athlete, num=25, start=0):
     athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
@@ -184,6 +195,79 @@ def load_activities(client, athlete, num=25, start=0):
         activities.append(activity)
 
     return activities
+
+def refresh_photos(client, athlete, activity_id, force=False, size=None):
+    athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
+    activities_dir = os.path.join(athlete_dir, 'activities')
+    photos_dir = os.path.join(activities_dir, activity_id, 'photos' , '0' if size == None else str(size))
+
+    if not os.path.isdir(photos_dir):
+        os.makedirs(photos_dir)
+
+    if dir_is_complete(photos_dir, force):
+        return
+
+    photos = client.get_activity_photos(activity_id, size)
+    for photo in photos:
+        with open(os.path.join(photos_dir, '{}.json'.format(photo.unique_id)), 'w') as f:
+            json.dump(photo.to_dict(), f)
+
+    dir_set_complete(photos_dir)
+
+def load_photos(client, athlete, activity_id, size=None):
+    athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
+    activities_dir = os.path.join(athlete_dir, 'activities')
+    photos_dir = os.path.join(activities_dir, activity_id, 'photos' , '0' if size == None else str(size))
+
+    photos = []
+    files = glob.glob(os.path.join(photos_dir, "*.json"))
+    for fname in files:
+        with open(fname, 'r') as f:
+            d = json.load(f)
+        photo = stravalib.model.ActivityPhoto()
+        photo.from_dict(d)
+        photos.append(photo)
+
+    return photos
+
+def refresh_streams(client, athlete, activity_id, force=False):
+    athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
+    activities_dir = os.path.join(athlete_dir, 'activities')
+    streams_dir = os.path.join(activities_dir, activity_id, 'streams')
+
+    if not os.path.isdir(streams_dir):
+        os.makedirs(streams_dir)
+
+    if dir_is_complete(streams_dir, force):
+        return
+
+    types = ['time', 'latlng']
+    stream = client.get_activity_streams(activity_id, types=types)
+    for type in types:
+        with open(os.path.join(streams_dir, '{}.json'.format(type)), 'w') as f:
+            json.dump(stream[type].to_dict(), f)
+
+    dir_set_complete(streams_dir)
+
+def load_streams(client, athlete, activity_id):
+    athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
+    activities_dir = os.path.join(athlete_dir, 'activities')
+    streams_dir = os.path.join(activities_dir, activity_id, 'streams')
+
+    streams = {}
+    files = glob.glob(os.path.join(streams_dir, "*.json"))
+    for fname in files:
+        stream_type = os.path.basename(fname)[0:-5]
+        if not stream_type in ['time', 'latlng']:
+            current_app.logger.info("unknown stream type '{}' from {}".format(stream_type, fname))
+            continue
+        with open(fname, 'r') as f:
+            d = json.load(f)
+        stream = stravalib.model.Stream()
+        stream.from_dict(d)
+        streams[stream_type] = stream
+
+    return streams
 
 def activity_dict(athlete, a):
     elapsed_time = unithelper.seconds(a.elapsed_time.total_seconds())
@@ -228,6 +312,7 @@ def activity_dict(athlete, a):
             garmin_link = 'https://connect.garmin.com/modern/activity/{}'.format(garmin_id)
 
     return {
+            'id' : a.id,
             'link' : url_for('query.show_activity', id=a.id),
             'strava_link' : 'https://www.strava.com/activities/{}'.format(a.id),
             'garmin_link' : garmin_link,
@@ -261,27 +346,36 @@ def show_settings():
     except (NoToken, AccessUnauthorized):
         return strava_login(page='/settings')
 
+def load_detailed_activity(client, athlete, id):
+    athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
+    activities_dir = os.path.join(athlete_dir, 'activities', 'detailed')
+    if not os.path.isdir(activities_dir):
+        os.makedirs(activities_dir)
+
+    filename = os.path.join(activities_dir, '{}.json'.format(id))
+    if os.path.isfile(filename):
+        with open(filename, 'r') as f:
+            activity = stravalib.model.Activity()
+            activity.from_dict(json.load(f))
+    else:
+        activity = client.get_activity(id)
+        with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
+            json.dump(activity.to_dict(), f)
+    activity.id = id
+
+    return activity
+
 @bp.route('/activity')
 def show_activity():
     id = request.args.get('id')
     try:
         client, athlete = create_context()
 
-        athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
-        activities_dir = os.path.join(athlete_dir, 'activities', 'detailed')
-        if not os.path.isdir(activities_dir):
-            os.makedirs(activities_dir)
+        refresh_photos(client, athlete, id)
+        refresh_streams(client, athlete, id)
 
-        filename = os.path.join(activities_dir, '{}.json'.format(id))
-        if os.path.isfile(filename):
-            with open(filename, 'r') as f:
-                activity = stravalib.model.Activity()
-                activity.from_dict(json.load(f))
-        else:
-            activity = client.get_activity(id)
-            with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
-                json.dump(activity.to_dict(), f)
-        activity.id = id
+        activity = load_detailed_activity(client, athlete, id)
+
         return render_template(
                                'query/activity.html', a=activity_dict(athlete, activity),
                                menu=main_menu, active_name='search')
@@ -523,6 +617,55 @@ def api_set_search():
             results.append(activity_dict(athlete, m))
  
         return(json.dumps({'results' : results, 'stats' : stats_localized }))
+    except (NoToken, AccessUnauthorized):
+        return json.dumps({'error' : 'unauthorized'}), 401
+
+def get_photo_location(activity, streams, photo):
+    # time offset:
+    seconds_photo = (photo.created_at - activity.start_date).seconds
+
+    # photo taken before
+    if seconds_photo < 0:
+        return None
+
+    # photo taken after activity
+    time_data = streams['time'].data
+    if seconds_photo > time_data[-1]:
+        return None
+
+    for i in range(1, len(time_data) - 1):
+        if seconds_photo < time_data[i]:
+            break
+
+    return streams['latlng'].data[i]
+
+@bp.route('/api/get_photos')
+def api_get_photos():
+    id = request.args.get('id')
+    try:
+        client, athlete = create_context()
+
+        refresh_photos(client, athlete, id)
+        refresh_streams(client, athlete, id)
+
+        photos = load_photos(client, athlete, id)
+        streams = load_streams(client, athlete, id)
+
+        activity = load_detailed_activity(client, athlete, id)
+
+        photo_list = []
+        for photo in photos:
+            latlng = get_photo_location(activity, streams, photo)
+            photo_dict = {
+                'unique_id': photo.unique_id,
+                'latlng': latlng,
+                'urls' : photo.urls,
+                'caption' : photo.caption
+            }
+            photo_list.append(photo_dict)
+
+        return json.dumps(photo_list)
+
     except (NoToken, AccessUnauthorized):
         return json.dumps({'error' : 'unauthorized'}), 401
 
