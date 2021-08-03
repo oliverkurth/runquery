@@ -32,16 +32,21 @@ function display_photos(status, photos, cbdata)
     markers = [];
 
     for (let photo of photos) {
-        p = photo.latlng;
-        var marker = L.marker(p);
+        var img = "<img src = '" + photo.urls['0'] + "' />";
+        icon = L.divIcon({
+            html: img,
+            className: 'photo-icon',
+            iconSize: [52, 52],
+        });
+        var marker = L.marker(photo.latlng, {icon: icon, riseOnHover: true});
         markers.push(marker);
 //        marker.bindPopup(a.date + "<br/>" + a.anchor);
     }
 
     layer_control.removeLayer(photos_layer);
-    starts_layer = L.layerGroup(markers);
+    photos_layer = L.layerGroup(markers);
     layer_control.addOverlay(photos_layer, "Photos");
-    starts_layer.addTo(map); // make it visible by default
+    photos_layer.addTo(map); // make it visible by default
 }
 
 function request_all() {

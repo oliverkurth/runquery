@@ -133,4 +133,12 @@ button {
   height: 600px;
 }
 
-#mapid { height: 800px;  } 
+#mapid { height: 800px;  }
+
+.photo-icon img {
+    height: 52px !important;
+    width: 52px !important;
+    border: solid;
+    border-color: white;
+}
+
