@@ -115,6 +115,7 @@ function display_tracks(data) {
             }
         ).addTo(map);
         lines.push(line);
+        line.bindPopup(a.date + "<br/>" + a.anchor);
     }
 
     layer_control.removeLayer(lines_layer);
