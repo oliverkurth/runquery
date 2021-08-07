@@ -156,7 +156,10 @@ button {
 /* ---- .grid-item ---- */
 
 .grid-sizer,
-.grid-item {
+.grid-item,
+.grid-item2,
+.grid-item3
+{
     width: 33.333%;
     border: 2px solid #fff;
 }
@@ -165,7 +168,27 @@ button {
   float: left;
 }
 
+.grid-item2 {
+    width: 66.667%;
+    float: left;
+}
+
+.grid-item3 {
+    width: 100%;
+    float: left;
+}
+
 .grid-item img {
+    display: block;
+    max-width: 100%;
+}
+
+.grid-item2 img {
+    display: block;
+    max-width: 100%;
+}
+
+.grid-item3 img {
     display: block;
     max-width: 100%;
 }

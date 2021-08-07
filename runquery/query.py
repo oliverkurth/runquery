@@ -667,6 +667,7 @@ def api_get_photos():
                 'unique_id': photo.unique_id,
                 'latlng': latlng,
                 'urls' : photo.urls,
+                'sizes' : photo.sizes,
                 'caption' : photo.caption
             }
             photo_list.append(photo_dict)
