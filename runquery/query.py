@@ -640,22 +640,30 @@ def get_photo_location(activity, streams, photo):
 @bp.route('/api/get_photos')
 def api_get_photos():
     id = request.args.get('id')
+    size = request.args.get('size')
+    if size != None:
+        size = int(size)
+    get_latlng = request.args.get('get_latlng') or False
     try:
         client, athlete = create_context()
 
-        refresh_photos(client, athlete, id)
-        refresh_streams(client, athlete, id)
+        refresh_photos(client, athlete, id, size)
+        photos = load_photos(client, athlete, id, size)
 
-        photos = load_photos(client, athlete, id)
-        streams = load_streams(client, athlete, id)
+        streams = None
+        if get_latlng:
+            refresh_streams(client, athlete, id)
+            streams = load_streams(client, athlete, id)
 
         activity = load_detailed_activity(client, athlete, id)
 
         photo_list = []
         for photo in photos:
-            latlng = get_photo_location(activity, streams, photo)
-            if not latlng:
-                continue
+            latlng = None
+            if get_latlng:
+                latlng = get_photo_location(activity, streams, photo)
+            if not latlng and photo.location:
+                latlng = photo.location.split(',')
             photo_dict = {
                 'unique_id': photo.unique_id,
                 'latlng': latlng,

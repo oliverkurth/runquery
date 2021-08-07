@@ -1,4 +1,3 @@
-<body onload="request_all()">
 {% extends 'base.html' %}
 
 {% block header %}
@@ -9,6 +8,7 @@
    integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
    crossorigin=""></script>
 <script type="text/javascript" src="https://rawgit.com/jieter/Leaflet.encoded/master/Polyline.encoded.js"></script>
+<script type="text/javascript" src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -32,6 +32,7 @@ function display_photos(status, photos, cbdata)
     markers = [];
 
     for (let photo of photos) {
+	if (photo.latlng == null) continue;
         var img = "<img src = '" + photo.urls['0'] + "' />";
         icon = L.divIcon({
             html: img,
@@ -40,7 +41,6 @@ function display_photos(status, photos, cbdata)
         });
         var marker = L.marker(photo.latlng, {icon: icon, riseOnHover: true});
         markers.push(marker);
-//        marker.bindPopup(a.date + "<br/>" + a.anchor);
     }
 
     layer_control.removeLayer(photos_layer);
@@ -50,11 +50,11 @@ function display_photos(status, photos, cbdata)
 }
 
 function request_all() {
-    async_request('/api/get_photos?id=' + {{ a['id'] }}, display_photos, null);
+    async_request('/api/get_photos?get_latlng=true&id=' + {{ a['id'] }}, display_photos, null);
 }
 
 </script>
-
+<body onload="request_all()">
 <table class="main">
 <tr>
 <td><b>{{a['name']|safe}}</b></td>
@@ -130,6 +130,6 @@ function request_all() {
 
 </script>
 
-{% endblock %}
 </body>
+{% endblock %}
 
