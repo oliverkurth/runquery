@@ -259,7 +259,6 @@ def load_streams(client, athlete, activity_id):
     for fname in files:
         stream_type = os.path.basename(fname)[0:-5]
         if not stream_type in ['time', 'latlng']:
-            current_app.logger.info("unknown stream type '{}' from {}".format(stream_type, fname))
             continue
         with open(fname, 'r') as f:
             d = json.load(f)
@@ -647,8 +646,8 @@ def api_get_photos():
     try:
         client, athlete = create_context()
 
-        refresh_photos(client, athlete, id, size)
-        photos = load_photos(client, athlete, id, size)
+        refresh_photos(client, athlete, id, size=size)
+        photos = load_photos(client, athlete, id, size=size)
 
         streams = None
         if get_latlng:
