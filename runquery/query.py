@@ -662,7 +662,7 @@ def api_get_photos():
             if get_latlng:
                 latlng = get_photo_location(activity, streams, photo)
             if not latlng and photo.location:
-                latlng = photo.location.split(',')
+                latlng = photo.location
             photo_dict = {
                 'unique_id': photo.unique_id,
                 'latlng': latlng,
