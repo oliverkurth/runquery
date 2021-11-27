@@ -124,9 +124,41 @@ function display_tracks(data) {
     lines_layer.addTo(map); // make it visible by default
 }
 
+var photos_layer = L.layerGroup([]);
+
+function display_photos_cb(status, photos, cbdata)
+{
+    if (status!= 200) {
+        console.log("got status " + status);
+    }
+
+    document.getElementById('status_photos').innerHTML = 'found ' + photos.length + ' photos';
+
+    for (let marker of markers) {
+        map.removeLayer(marker);
+    }
+    markers = [];
+
+    for (let photo of photos) {
+        if (photo.latlng == null) continue;
+        var img = "<img src = '" + photo.urls['0'] + "' />";
+        icon = L.divIcon({
+            html: img,
+            className: 'photo-icon',
+            iconSize: [52, 52],
+        });
+        var marker = L.marker(photo.latlng, {icon: icon, riseOnHover: true});
+        markers.push(marker);
+    }
+
+    layer_control.removeLayer(photos_layer);
+    photos_layer = L.layerGroup(markers);
+    layer_control.addOverlay(photos_layer, "Photos");
+    photos_layer.addTo(map); // make it visible by default
+}
+
 function set_search_cb(status, ret, data) {
     if (status == 200) {
-	console.log(ret);
 	result = ret.results;
         document.getElementById('status').innerHTML = 'found ' + result.length + ' results';
         table = document.getElementById('activities');
@@ -139,6 +171,16 @@ function set_search_cb(status, ret, data) {
         display_tracks(result);
 
         display_stats(ret.stats);
+
+        csv_activities=""
+        for (let a of result) {
+            csv_activities += a.id.toString() + ',';
+        }
+        if (document.getElementById('load_photos').checked) {
+            document.getElementById('status_photos').innerHTML = 'loading photos...';
+            async_request('/api/get_photos?get_latlng=true&id=' + csv_activities, display_photos_cb, null);
+        }
+
     } else if (status == 401) {
         window.location.href = '/login?page=/search';
     }
@@ -197,9 +239,11 @@ function on_moveend(e){
 <td>Elevation less than:</td><td><input type='text' size='5' id='max_gain'/> {{unit_elev}}</td>
 </tr><tr>
 <td>Within map bounds:<input type="checkbox" size="20" id="within_bounds"></td>
+<td>Load photos:<input type="checkbox" size="20" id="load_photos"></td>
 </tr><tr>
 <td><button type="button" onclick="set_search()">Search</button></td>
-<td><p id='status'></p></rd>
+<td><p id='status'></p></td>
+<td><p id='status_photos'></p></td>
 </tr>
 </table>
 

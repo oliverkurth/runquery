@@ -98,7 +98,7 @@ def create_context():
 
     athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
     if not os.path.isdir(athlete_dir):
-        os.makedirs(athlete_dir)
+        make_dirs(athlete_dir)
 
     with open(os.path.join(athlete_dir, 'athlete.json'), 'w') as f:
         json.dump(athlete.to_dict(), f)
@@ -145,7 +145,7 @@ def refresh_activities(client, athlete, force=False, all=False):
     athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
     activities_dir = os.path.join(athlete_dir, 'activities')
     if not os.path.isdir(activities_dir):
-        os.makedirs(activities_dir)
+        make_dirs(activities_dir)
 
     if dir_is_complete(activities_dir, force, max_age=3600):
         return
@@ -202,7 +202,7 @@ def refresh_photos(client, athlete, activity_id, force=False, size=None):
     photos_dir = os.path.join(activities_dir, activity_id, 'photos' , '0' if size == None else str(size))
 
     if not os.path.isdir(photos_dir):
-        os.makedirs(photos_dir)
+        make_dirs(photos_dir)
 
     if dir_is_complete(photos_dir, force):
         return
@@ -236,7 +236,7 @@ def refresh_streams(client, athlete, activity_id, force=False):
     streams_dir = os.path.join(activities_dir, activity_id, 'streams')
 
     if not os.path.isdir(streams_dir):
-        os.makedirs(streams_dir)
+        make_dirs(streams_dir)
 
     if dir_is_complete(streams_dir, force):
         return
@@ -349,7 +349,7 @@ def load_detailed_activity(client, athlete, id):
     athlete_dir = os.path.join(current_app.instance_path, 'athletes', str(athlete.id))
     activities_dir = os.path.join(athlete_dir, 'activities', 'detailed')
     if not os.path.isdir(activities_dir):
-        os.makedirs(activities_dir)
+        make_dirs(activities_dir)
 
     filename = os.path.join(activities_dir, '{}.json'.format(id))
     if os.path.isfile(filename):
@@ -636,41 +636,54 @@ def get_photo_location(activity, streams, photo):
 
     return streams['latlng'].data[i]
 
+def get_photos_from_activity(activity, streams, photos, get_latlng):
+    photo_list = []
+    for photo in photos:
+        latlng = None
+        if get_latlng:
+            latlng = get_photo_location(activity, streams, photo)
+        if not latlng and photo.location:
+            latlng = photo.location
+        photo_dict = {
+            'unique_id': photo.unique_id,
+            'latlng': latlng,
+            'urls' : photo.urls,
+            'sizes' : photo.sizes,
+            'caption' : photo.caption
+        }
+        photo_list.append(photo_dict)
+    return photo_list
+
 @bp.route('/api/get_photos')
 def api_get_photos():
-    id = request.args.get('id')
+    ids = request.args.get('id')
+    ids = ids.split(',')
     size = request.args.get('size')
     if size != None:
         size = int(size)
     get_latlng = request.args.get('get_latlng') or False
     try:
+        photo_list = []
         client, athlete = create_context()
 
-        refresh_photos(client, athlete, id, size=size)
-        photos = load_photos(client, athlete, id, size=size)
+        all_ids = get_saved_activity_ids(athlete)
 
-        streams = None
-        if get_latlng:
-            refresh_streams(client, athlete, id)
-            streams = load_streams(client, athlete, id)
+        for id in ids:
+            if not id.isnumeric():
+                continue
+            if not int(id) in all_ids:
+                continue
 
-        activity = load_detailed_activity(client, athlete, id)
+            refresh_photos(client, athlete, id, size=size)
+            photos = load_photos(client, athlete, id, size=size)
 
-        photo_list = []
-        for photo in photos:
-            latlng = None
+            streams = None
             if get_latlng:
-                latlng = get_photo_location(activity, streams, photo)
-            if not latlng and photo.location:
-                latlng = photo.location
-            photo_dict = {
-                'unique_id': photo.unique_id,
-                'latlng': latlng,
-                'urls' : photo.urls,
-                'sizes' : photo.sizes,
-                'caption' : photo.caption
-            }
-            photo_list.append(photo_dict)
+                refresh_streams(client, athlete, id)
+                streams = load_streams(client, athlete, id)
+
+            activity = load_detailed_activity(client, athlete, id)
+            photo_list += get_photos_from_activity(activity, streams, photos, get_latlng)
 
         return json.dumps(photo_list)
 

@@ -43,7 +43,7 @@ var layer_control = null;
 var markers = [];
 var photos_layer = L.layerGroup([]);
 
-function display_photos(status, photos, cbdata)
+function display_photos_cb(status, photos, cbdata)
 {
     if (status!= 200) {
         console.log("got status " + status);
@@ -82,7 +82,7 @@ function getItemElement() {
     return elem;
 }
 
-function display_photos_grid(status, photos, cbdata)
+function display_photos_grid_cb(status, photos, cbdata)
 {
     if (status!= 200) {
         console.log("got status " + status);
@@ -122,8 +122,8 @@ function display_photos_grid(status, photos, cbdata)
 }
 
 function request_all() {
-    async_request('/api/get_photos?get_latlng=true&id=' + {{ a['id'] }}, display_photos, null);
-    async_request('/api/get_photos?get_latlng=false&size=2048&id=' + {{ a['id'] }}, display_photos_grid, null);
+    async_request('/api/get_photos?get_latlng=true&id=' + {{ a['id'] }}, display_photos_cb, null);
+    async_request('/api/get_photos?get_latlng=false&size=2048&id=' + {{ a['id'] }}, display_photos_grid_cb, null);
 }
 
 </script>
