@@ -7,8 +7,6 @@ RUN apk add --no-cache \
         python \
         git \
         py-pip
-RUN pip install flask
-RUN pip install git+https://github.com/oliverkurth/stravalib.git@fix-from-to-dict
 COPY . .
 RUN rm -rf instance/
 RUN pip install --no-cache-dir -r requirements.txt
