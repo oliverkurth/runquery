@@ -32,7 +32,7 @@ main_menu = [
 def make_dirs(d):
     try:
         os.makedirs(d)
-    except OSError, e:
+    except OSError as e:
         if e.errno != os.errno.EEXIST:
             raise
 
@@ -414,7 +414,7 @@ def calc_stats(athlete, activities):
     stats_total = stats['total']
     for a in activities:
         stats_total['dist'] += a.distance
-	stats_total['time'] += unithelper.seconds(float(a.elapsed_time.total_seconds()))
+        stats_total['time'] += unithelper.seconds(float(a.elapsed_time.total_seconds()))
         stats_total['elevation'] += a.total_elevation_gain
 
     stats_count = stats['per_activity']
@@ -606,10 +606,10 @@ def api_set_search():
 
             matched.append(a)
 
-	stats_localized = {}
-	if len(matched) > 0:
+        stats_localized = {}
+        if len(matched) > 0:
             stats = calc_stats(athlete, matched)
-	    stats_localized = stats_localize(athlete, stats)
+            stats_localized = stats_localize(athlete, stats)
 
         results = []
         for m in matched:
