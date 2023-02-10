@@ -1,6 +1,6 @@
 import os
 from flask import Flask
-import query
+from . import query
 
 def create_app(test_config=None):
     # create and configure the app
