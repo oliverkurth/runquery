@@ -56,7 +56,8 @@ function display_photos_cb(status, photos, cbdata)
 
     for (let photo of photos) {
 	if (photo.latlng == null) continue;
-        var img = "<img src = '" + photo.urls['0'] + "' />";
+	console.log(photo);
+        var img = "<img src = '" + photo.urls['2048'] + "' />";
         icon = L.divIcon({
             html: img,
             className: 'photo-icon',
@@ -122,7 +123,7 @@ function display_photos_grid_cb(status, photos, cbdata)
 }
 
 function request_all() {
-    async_request('/api/get_photos?get_latlng=true&id=' + {{ a['id'] }}, display_photos_cb, null);
+    async_request('/api/get_photos?get_latlng=true&size=2048&id=' + {{ a['id'] }}, display_photos_cb, null);
     async_request('/api/get_photos?get_latlng=false&size=2048&id=' + {{ a['id'] }}, display_photos_grid_cb, null);
 }
 
