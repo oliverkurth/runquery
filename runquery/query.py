@@ -326,7 +326,7 @@ def activity_dict(athlete, a):
             'moving_time' : str(a.moving_time),
             'speed' : speed,
             'elapsed_speed' : elapsed_speed,
-            'start_latlng' : [a.start_latitude, a.start_longitude],
+            'start_latlng' : [a.start_latlng.lat, a.start_latlng.lon],
             'polyline' : a.map.polyline or a.map.summary_polyline
         }
 
@@ -581,25 +581,25 @@ def api_set_search():
                 if a.start_date_local < date_after:
                     continue
 
-            if min_dist > dist_unit(0):
+            if float(min_dist) > 0:
                 if a.distance < min_dist:
                     continue
 
-            if max_dist > dist_unit(0):
+            if float(max_dist) > 0:
                 if a.distance > max_dist:
                     continue
 
-            if min_gain > gain_unit(0):
+            if float(min_gain) > 0:
                 if a.total_elevation_gain < min_gain:
                     continue
 
-            if max_gain > gain_unit(0):
+            if float(max_gain) > 0:
                 if a.total_elevation_gain > max_gain:
                     continue
 
             if bounds != None:
-                lat = a.start_latitude
-                lng = a.start_longitude
+                lat = a.start_latlng.lat
+                lng = a.start_latlng.lon
                 if lat < bounds[0] or lng < bounds[1] or \
                    lat > bounds[2] or lng > bounds[3] :
                     continue
