@@ -1,12 +1,12 @@
-FROM alpine:3.7
+FROM alpine
 EXPOSE 3031
 VOLUME /usr/src/app/public
 WORKDIR /usr/src/app
 RUN apk add --no-cache \
-        uwsgi-python \
-        python \
+        uwsgi-python3 \
+        python3 \
         git \
-        py-pip
+        py3-pip
 COPY . .
 RUN rm -rf instance/
 RUN pip install --no-cache-dir -r requirements.txt

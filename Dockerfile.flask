@@ -1,12 +1,12 @@
-FROM alpine:3.7
+FROM alpine
 EXPOSE 3031
 RUN apk add --no-cache \
-        uwsgi-python \
-        python \
+        uwsgi-python3 \
+        python3 \
         git \
-        py-pip
+        py3-pip
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 VOLUME /usr/src/app/
 WORKDIR /usr/src/app
@@ -17,5 +17,5 @@ ENV FLASK_ENV development
 ENV INSTANCE_DIR ./instance
 ENV DEBUG_MODE TRUE
 
-CMD [ "python", "-m", "flask", "run", "-h", "0.0.0.0", "-p", "8282"] 
+CMD [ "python3", "-m", "flask", "run", "-h", "0.0.0.0", "-p", "8282"]
 
