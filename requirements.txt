@@ -1,3 +1,2 @@
 flask
-git+https://github.com/oliverkurth/stravalib.git@before-pint
-
+stravalib

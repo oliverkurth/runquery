@@ -3,7 +3,7 @@
 import stravalib
 from stravalib.client import Client
 from stravalib.exc import AccessUnauthorized, ObjectNotFound
-from stravalib import unithelper
+from stravalib import unithelper, unit_registry
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for, current_app
 )
@@ -15,7 +15,6 @@ import time
 import shutil
 import calendar
 import math
-import units
 from bisect import bisect_left
 CLIENT_ID='3724'
 # we want an exception if unset
@@ -269,26 +268,28 @@ def load_streams(client, athlete, activity_id):
     return streams
 
 def activity_dict(athlete, a):
+    unit_mph = unithelper.UnitConverter('mile/hour')
+
     elapsed_time = unithelper.seconds(a.elapsed_time.total_seconds())
     if athlete.measurement_preference == 'feet':
-        distance = str(unithelper.miles(a.distance))
-        gain = str(unithelper.feet(a.total_elevation_gain))
+        distance = "{0:.2f}".format(unithelper.miles(a.distance))
+        gain = "{0:.0f}".format(unithelper.feet(a.total_elevation_gain))
         if a.type == 'Ride':
-            speed = str(unithelper.mph(a.average_speed))
-            elapsed_speed = str(unithelper.mph(a.distance/elapsed_time))
+            speed = "{0:.2f}".format(unithelper.mph(a.average_speed))
+            elapsed_speed = "{0:.2f}".format(unithelper.mph(a.distance/elapsed_time))
         else:
             try:
-                speed = "{0:.2f} /mi".format(60/(unithelper.mph(a.average_speed).num))
-                elapsed_speed = "{0:.2f} /mi".format(60/unithelper.mph(a.distance/elapsed_time).num)
+                speed = "{0:.2f} /mi".format(60/(unit_mph(a.average_speed).num))
+                elapsed_speed = "{0:.2f} /mi".format(60/unit_mph(a.distance/elapsed_time).num)
             except ZeroDivisionError:
                 speed = 'NaN'
                 elapsed_speed = 'NaN'
     else:
-        distance = str(unithelper.kilometers(a.distance))
-        gain = str(unithelper.meters(a.total_elevation_gain))
+        distance = "{0:.2f}".format(unithelper.kilometers(a.distance))
+        gain = "{0:.0f}".format(unithelper.meters(a.total_elevation_gain))
         if a.type == 'Ride':
-            speed = str(unithelper.kph(a.average_speed))
-            elapsed_speed = str(unithelper.kph(a.distance/elapsed_time))
+            speed = "{0:.2f}".format(unithelper.kph(a.average_speed))
+            elapsed_speed = "{0:.2f}".format(unithelper.kph(a.distance/elapsed_time))
         else:
             try:
                 speed = "{0:.2f} /km".format(60/(unithelper.kph(a.average_speed).num))
@@ -435,9 +436,9 @@ def calc_stats(athlete, activities):
 
 def _seconds_to_timestr(seconds):
     seconds = int(seconds)
-    h = seconds / 3600
-    m = seconds / 60 % 60
-    s = seconds % 60
+    h = int(seconds / 3600)
+    m = int(seconds / 60 % 60)
+    s = int(seconds % 60)
     return '{}:{}:{}'.format(h, m, s)
 
 def stats_localize(athlete, stats):
@@ -448,37 +449,37 @@ def stats_localize(athlete, stats):
             'time' : unithelper.seconds,
             'elevation': unithelper.meters,
             'speed': unithelper.kph,
-            'pace': units.unit('min')/unithelper.kilometers,
+            'pace': unithelper.UnitConverter('min/km')
         }
     else:
         ath_units = {
             'dist': unithelper.miles,
             'time' : unithelper.seconds,
             'elevation' : unithelper.feet,
-            'speed': unithelper.mph,
-            'pace': units.unit('min')/unithelper.miles
+            'speed': unithelper.UnitConverter('mile/hour'), # unithelper.mph,
+            'pace': unithelper.UnitConverter('min/mile')
         }
 
     sdict = {}
 
     sdict_total = {}
-    sdict_total['dist'] = str(ath_units['dist'](stats['total']['dist']))
-    sdict_total['elevation'] = str(ath_units['elevation'](stats['total']['elevation']))
+    sdict_total['dist'] = "{0:.2f}".format(ath_units['dist'](stats['total']['dist']))
+    sdict_total['elevation'] = "{0:.0f}".format(ath_units['elevation'](stats['total']['elevation']))
     sdict_total['time'] = _seconds_to_timestr(stats['total']['time'])
     sdict['total'] = sdict_total
 
     sdict_per_activity = {}
-    sdict_per_activity['dist'] = str(ath_units['dist'](stats['per_activity']['dist']))
-    sdict_per_activity['elevation'] = str(ath_units['elevation'](stats['per_activity']['elevation']))
+    sdict_per_activity['dist'] = "{0:.2f}".format(ath_units['dist'](stats['per_activity']['dist']))
+    sdict_per_activity['elevation'] = "{0:.0f}".format(ath_units['elevation'](stats['per_activity']['elevation']))
     sdict_per_activity['time'] = _seconds_to_timestr(stats['per_activity']['time'])
     sdict['per_activity'] = sdict_per_activity
 
     sdict_per_time = {}
-    sdict_per_time['speed'] = str(ath_units['speed'](stats['per_time']['dist']))
+    sdict_per_time['speed'] = "{0:.2f}".format(ath_units['speed'](stats['per_time']['dist']))
     sdict['per_time'] = sdict_per_time
 
     sdict_per_dist = {}
-    sdict_per_dist['pace'] = str(ath_units['pace'](stats['per_dist']['time']))
+    sdict_per_dist['pace'] = "{0:.2f}".format(ath_units['pace'](stats['per_dist']['time']))
     sdict['per_dist'] = sdict_per_dist
 
     return sdict
