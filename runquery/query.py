@@ -206,7 +206,7 @@ def refresh_photos(client, athlete, activity_id, force=False, size=None):
     if dir_is_complete(photos_dir, force):
         return
 
-    photos = client.get_activity_photos(activity_id, size)
+    photos = client.get_activity_photos(activity_id, size=size)
     for photo in photos:
         with open(os.path.join(photos_dir, '{}.json'.format(photo.unique_id)), 'w') as f:
             json.dump(photo.to_dict(), f)
