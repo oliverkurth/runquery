@@ -7,11 +7,11 @@ Create a file called `app.env` with your keys:
 
 ```
 FLASK_SECRET_KEY=<your secret flask key>
-STRAVA_CLIENT_SECRET=<your secret straa client key>
+STRAVA_CLIENT_SECRET=<your secret strava client key>
 SERVERNAME=<IP:PORT>
 ```
 
-The `FLASK_SECRET_KEY` is a random string that you generate once. For example, you can use `pwgen 32`.
+The `FLASK_SECRET_KEY` is a random string that you generate once. For example, you can use `pwgen 32`. See [Flask Configuration Handling](https://flask.palletsprojects.com/en/3.0.x/config/)
 
 The `STRAVA_CLIENT_SECRET` is the secret key you get from strava when you register your app. See https://developers.strava.com/ .
 
