@@ -100,7 +100,7 @@ def create_context():
         make_dirs(athlete_dir)
 
     with open(os.path.join(athlete_dir, 'athlete.json'), 'w') as f:
-        json.dump(athlete.to_dict(), f)
+        f.write(athlete.json())
 
     return client, athlete
 
@@ -169,7 +169,7 @@ def refresh_activities(client, athlete, force=False, all=False):
     count = 0
     for activity in activities:
         with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
-            json.dump(activity.to_dict(), f)
+            f.write(activity.json())
         count = count + 1
     print("retrieved {} activities".format(count))
 
@@ -208,8 +208,8 @@ def refresh_photos(client, athlete, activity_id, force=False, size=None):
 
     photos = client.get_activity_photos(activity_id, size=size)
     for photo in photos:
-        with open(os.path.join(photos_dir, '{}.json'.format(photo.unique_id)), 'w') as f:
-            json.dump(photo.to_dict(), f)
+        with open(os.path.join(photos_dir, f"{photo.unique_id}.json"), 'w') as f:
+            f.write(photo.json())
 
     dir_set_complete(photos_dir)
 
@@ -222,7 +222,12 @@ def load_photos(client, athlete, activity_id, size=None):
     files = glob.glob(os.path.join(photos_dir, "*.json"))
     for fname in files:
         with open(fname, 'r') as f:
-            d = json.load(f)
+            try:
+                d = json.load(f)
+            except json.decoder.JSONDecodeError as e:
+                print(f"could not load json file {fname}")
+                print(e)
+
         photo = stravalib.model.ActivityPhoto()
         photo.from_dict(d)
         photos.append(photo)
@@ -243,8 +248,10 @@ def refresh_streams(client, athlete, activity_id, force=False):
     types = ['time', 'latlng']
     stream = client.get_activity_streams(activity_id, types=types)
     for type in types:
+        if not type in stream:
+            continue
         with open(os.path.join(streams_dir, '{}.json'.format(type)), 'w') as f:
-            json.dump(stream[type].to_dict(), f)
+            f.write(stream[type].json())
 
     dir_set_complete(streams_dir)
 
@@ -259,11 +266,15 @@ def load_streams(client, athlete, activity_id):
         stream_type = os.path.basename(fname)[0:-5]
         if not stream_type in ['time', 'latlng']:
             continue
-        with open(fname, 'r') as f:
-            d = json.load(f)
-        stream = stravalib.model.Stream()
-        stream.from_dict(d)
-        streams[stream_type] = stream
+        try:
+            with open(fname, 'r') as f:
+                d = json.load(f)
+            stream = stravalib.model.Stream()
+            stream.from_dict(d)
+            streams[stream_type] = stream
+        except json.decoder.JSONDecodeError as e:
+            print(f"could not load json file {fname}")
+            print(e)
 
     return streams
 
@@ -327,7 +338,7 @@ def activity_dict(athlete, a):
             'moving_time' : str(a.moving_time),
             'speed' : speed,
             'elapsed_speed' : elapsed_speed,
-            'start_latlng' : [a.start_latlng.lat, a.start_latlng.lon],
+            'start_latlng' : [a.start_latlng.lat, a.start_latlng.lon] if a.start_latlng else None,
             'polyline' : a.map.polyline or a.map.summary_polyline
         }
 
@@ -359,8 +370,8 @@ def load_detailed_activity(client, athlete, id):
             activity.from_dict(json.load(f))
     else:
         activity = client.get_activity(id)
-        with open(os.path.join(activities_dir, '{}.json'.format(activity.id)), 'w') as f:
-            json.dump(activity.to_dict(), f)
+        with open(os.path.join(activities_dir, "{activity.id}.json"), "w") as f:
+            f.write(activity.json())
     activity.id = id
 
     return activity
@@ -599,10 +610,14 @@ def api_set_search():
                     continue
 
             if bounds != None:
-                lat = a.start_latlng.lat
-                lng = a.start_latlng.lon
-                if lat < bounds[0] or lng < bounds[1] or \
-                   lat > bounds[2] or lng > bounds[3] :
+                if a.start_latlng is not None:
+                    lat = a.start_latlng.lat
+                    lng = a.start_latlng.lon
+                    if lat < bounds[0] or lng < bounds[1] or \
+                       lat > bounds[2] or lng > bounds[3] :
+                        continue
+                else:
+                    # some activities have no GPS, like indoor runs
                     continue
 
             matched.append(a)
@@ -614,7 +629,12 @@ def api_set_search():
 
         results = []
         for m in matched:
-            results.append(activity_dict(athlete, m))
+            try:
+                results.append(activity_dict(athlete, m))
+            except AttributeError as e:
+                print(f"activity_dict() failed for {m.id}")
+                print(m)
+                print(e)
  
         return(json.dumps({'results' : results, 'stats' : stats_localized }))
     except (NoToken, AccessUnauthorized):

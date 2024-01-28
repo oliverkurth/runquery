@@ -58,10 +58,12 @@ function getBounds(activities) {
     var sw = L.latLng(activities[0].start_latlng);
     var ne = L.latLng(activities[0].start_latlng);
     for (let a of activities) {
-         if (a.start_latlng[0] < sw.lat) { sw.lat = a.start_latlng[0]; }
-         if (a.start_latlng[1] < sw.lng) { sw.lng = a.start_latlng[1]; }
-         if (a.start_latlng[0] > ne.lat) { ne.lat = a.start_latlng[0]; }
-         if (a.start_latlng[1] > ne.lng) { ne.lng = a.start_latlng[1]; }
+        if (a.start_latlng == null)
+            continue;
+        if (a.start_latlng[0] < sw.lat) { sw.lat = a.start_latlng[0]; }
+        if (a.start_latlng[1] < sw.lng) { sw.lng = a.start_latlng[1]; }
+        if (a.start_latlng[0] > ne.lat) { ne.lat = a.start_latlng[0]; }
+        if (a.start_latlng[1] > ne.lng) { ne.lng = a.start_latlng[1]; }
     }
     return L.latLngBounds(sw, ne);
 }
@@ -79,6 +81,8 @@ function display_markers(data) {
 
     for (let a of data) {
         p = a.start_latlng;
+        if (p == null)
+            continue;
         var marker = L.marker(p);
         markers.push(marker);
         marker.bindPopup(a.date + "<br/>" + a.anchor);
