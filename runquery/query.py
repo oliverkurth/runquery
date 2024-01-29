@@ -16,6 +16,8 @@ import shutil
 import calendar
 import math
 from bisect import bisect_left
+
+
 CLIENT_ID='3724'
 # we want an exception if unset
 CLIENT_SECRET=os.environ['STRAVA_CLIENT_SECRET']
@@ -664,7 +666,8 @@ def get_photos_from_activity(activity, streams, photos, get_latlng):
         if get_latlng:
             latlng = get_photo_location(activity, streams, photo)
         if not latlng and photo.location:
-            latlng = photo.location
+            # convert LatLon to list to avoid serialization issues
+            latlng = [photo.location.lat, photo.location.lon]
         photo_dict = {
             'unique_id': photo.unique_id,
             'latlng': latlng,
